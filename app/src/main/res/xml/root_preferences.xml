@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <PreferenceCategory android:title="Video">
         <ListPreference
@@ -107,12 +108,63 @@
             android:defaultValue="auto" />
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="@string/road_category">
+        <SwitchPreferenceCompat
+            android:key="road_speed_alerts"
+            android:title="@string/road_speed_alerts_title"
+            android:summary="@string/road_speed_alerts_summary"
+            android:defaultValue="true" />
+        <SwitchPreferenceCompat
+            android:key="road_use_osm_limit"
+            android:title="@string/road_use_osm_limit_title"
+            android:summary="@string/road_use_osm_limit_summary"
+            android:defaultValue="true" />
+        <ListPreference
+            android:key="road_manual_limit"
+            android:title="@string/road_manual_limit_title"
+            android:entries="@array/road_manual_limit_entries"
+            android:entryValues="@array/road_manual_limit_values"
+            android:defaultValue="100"
+            app:useSimpleSummaryProvider="true" />
+        <ListPreference
+            android:key="road_tolerance"
+            android:title="@string/road_tolerance_title"
+            android:entries="@array/road_tolerance_entries"
+            android:entryValues="@array/road_tolerance_values"
+            android:defaultValue="5"
+            app:useSimpleSummaryProvider="true" />
+        <SwitchPreferenceCompat
+            android:key="road_camera_alerts"
+            android:title="@string/road_camera_alerts_title"
+            android:summary="@string/road_camera_alerts_summary"
+            android:defaultValue="true" />
+        <ListPreference
+            android:key="road_alert_sound"
+            android:title="@string/road_alert_sound_title"
+            android:entries="@array/road_sound_entries"
+            android:entryValues="@array/road_sound_values"
+            android:defaultValue="voice"
+            app:useSimpleSummaryProvider="true" />
+        <SwitchPreferenceCompat
+            android:key="road_overlay"
+            android:title="@string/road_overlay_title"
+            android:summary="@string/road_overlay_summary"
+            android:defaultValue="true" />
+        <ListPreference
+            android:key="road_overlay_corner"
+            android:title="@string/road_overlay_corner_title"
+            android:entries="@array/road_corner_entries"
+            android:entryValues="@array/road_corner_values"
+            android:defaultValue="top_right"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+
     <PreferenceCategory android:title="Updates">
         <SwitchPreferenceCompat
             android:key="update_auto_check"
             android:title="Check automatically"
             android:summary="Check once per app launch; only notifies when something newer actually exists"
-            android:defaultValue="true" />
+            android:defaultValue="false" />
         <Preference
             android:key="check_for_updates_now"
             android:title="Check for updates now" />

@@ -166,8 +166,23 @@ class AaCarPresentation(
         }
         root.addView(area, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
         root.addView(starting, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        // Speed, limit and the next camera over Android Auto (dev.caraalink.road).
+        if (dev.caraalink.settings.AppSettings.roadOverlay(context)) {
+            root.addView(dev.caraalink.road.RoadOverlay(context), FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        }
         dev.caraalink.diagnostics.PerfStats.attachHud(context, root)
         setContentView(root)
+    }
+
+    /** Speed and camera alerts run while Android Auto is on the car screen. */
+    override fun onStart() {
+        super.onStart()
+        dev.caraalink.road.RoadAlerts.start(context)
+    }
+
+    override fun onStop() {
+        dev.caraalink.road.RoadAlerts.stop()
+        super.onStop()
     }
 
     private fun dp(v: Int) = TypedValue.applyDimension(

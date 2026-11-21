@@ -296,19 +296,26 @@ class UsbLinkForegroundService : Service() {
     private fun startForegroundWithMic(wireless: Boolean = false) {
         val notification = buildNotification(ConnectionStateHolder.snapshot)
         val micGranted = checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED
-        // Wi-Fi Direct scans count as location access up to Android 12, so a reconnect mid-drive needs this type.
-        val location = if (wireless && needsLocationForWifiDirect() && hasFineLocation()) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0
+        // Location is needed for Wi-Fi Direct scans up to Android 12 (a reconnect mid-drive), and for
+        // speed/camera alerts: without this type the GPS stops once the phone screen goes off.
+        val roadAlerts = dev.caraalink.settings.AppSettings.roadSpeedAlerts(this) ||
+            dev.caraalink.settings.AppSettings.roadCameraAlerts(this)
+        val location = if (((wireless && needsLocationForWifiDirect()) || roadAlerts) && hasFineLocation()) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0
+        val device = ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
         // The microphone type only exists from Android 11; on 10 it's an undeclared type and throws.
-        if (micGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        val mic = if (micGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE else 0
+        // Android 14 refuses microphone/location types when started from the background (transport
+        // reconnects run there), so drop them one at a time rather than failing the session.
+        val attempts = linkedSetOf(device or mic or location, device or location, device or mic, device).toList()
+        for ((i, types) in attempts.withIndex()) {
             try {
-                startForeground(NOTIFICATION_ID, notification,
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE or location)
+                startForeground(NOTIFICATION_ID, notification, types)
                 return
             } catch (e: SecurityException) {
-                Log.w(TAG, "startForeground with microphone refused -- retrying connectedDevice only", e)
+                if (i == attempts.lastIndex) throw e
+                Log.w(TAG, "startForeground(types=$types) refused -- retrying with fewer types", e)
             }
         }
-        startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE or location)
     }
 
     private fun needsLocationForWifiDirect() = Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2

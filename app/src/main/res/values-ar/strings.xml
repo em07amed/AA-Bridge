@@ -98,4 +98,36 @@
     <string name="tile_link">الاتصال</string>
     <string name="link_wireless_short">لاسلكي</string>
     <string name="link_cable_short">كابل</string>
+    <!-- تحذير السرعة والرادار -->
+    <string name="road_category">تحذير السرعة والرادار</string>
+    <string name="road_speed_alerts_title">تحذير السرعة</string>
+    <string name="road_speed_alerts_summary">ينبّهك لما تعدّي الحد</string>
+    <string name="road_use_osm_limit_title">استخدم حد الطريق</string>
+    <string name="road_use_osm_limit_summary">من OpenStreetMap لو الطريق متسجّل له حد. البيانات في مصر ناقصة.</string>
+    <string name="road_manual_limit_title">الحد لما حد الطريق مش معروف</string>
+    <string name="road_tolerance_title">ينبّه لما تعدّي الحد بـ</string>
+    <string name="road_camera_alerts_title">تنبيه الرادارات</string>
+    <string name="road_camera_alerts_summary">قبل الرادار بـ 600 متر. على شاشة العربية: دوس مطوّل على السرعة عشان تسجّل رادار، أو على شريط الرادار عشان تشيل رادار غلط.</string>
+    <string name="road_alert_sound_title">صوت التنبيه</string>
+    <string name="road_overlay_title">اعرض السرعة على شاشة العربية</string>
+    <string name="road_overlay_summary">السرعة والحد وأقرب رادار فوق Android Auto. دوس عليها عشان تكتم الصوت.</string>
+    <string name="road_overlay_corner_title">مكانها على شاشة العربية</string>
+    <string name="road_kmh">كم/س</string>
+    <string name="road_camera_banner">📷 %1$d م</string>
+    <string name="road_say_speeding">انتبه. سرعتك %1$d، والحد %2$d.</string>
+    <string name="road_say_camera_far">رادار بعد %1$d متر. الحد %2$d.</string>
+    <string name="road_say_camera_far_nolimit">رادار بعد %1$d متر.</string>
+    <string name="road_say_camera_near">هدّي. الرادار قدامك، والحد %1$d.</string>
+    <string name="road_note_camera_added">اتسجّل رادار هنا</string>
+    <string name="road_note_camera_removed">اتشال الرادار</string>
+    <string name="road_note_muted">التنبيهات مكتومة</string>
+    <string name="road_note_unmuted">التنبيهات شغالة</string>
+    <string name="road_sound_voice">صوت</string>
+    <string name="road_sound_beep">صفارة</string>
+    <string name="road_off">مقفول</string>
+    <string name="road_corner_top_right">فوق يمين</string>
+    <string name="road_corner_top_left">فوق شمال</string>
+    <string name="road_corner_bottom_right">تحت يمين</string>
+    <string name="road_corner_bottom_left">تحت شمال</string>
+    <string name="road_kmh_value">%1$d كم/س</string>
 </resources>

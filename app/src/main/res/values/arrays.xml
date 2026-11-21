@@ -75,4 +75,53 @@
         <item>accessory</item>
         <item>host</item>
     </string-array>
+    <!-- Speed & radar alerts -->
+    <string-array name="road_manual_limit_entries">
+        <item>@string/road_off</item>
+        <item>60</item>
+        <item>80</item>
+        <item>90</item>
+        <item>100</item>
+        <item>120</item>
+    </string-array>
+    <string-array name="road_manual_limit_values">
+        <item>0</item>
+        <item>60</item>
+        <item>80</item>
+        <item>90</item>
+        <item>100</item>
+        <item>120</item>
+    </string-array>
+    <string-array name="road_tolerance_entries">
+        <item>0</item>
+        <item>5</item>
+        <item>10</item>
+    </string-array>
+    <string-array name="road_tolerance_values">
+        <item>0</item>
+        <item>5</item>
+        <item>10</item>
+    </string-array>
+    <string-array name="road_sound_entries">
+        <item>@string/road_sound_voice</item>
+        <item>@string/road_sound_beep</item>
+        <item>@string/road_off</item>
+    </string-array>
+    <string-array name="road_sound_values">
+        <item>voice</item>
+        <item>beep</item>
+        <item>off</item>
+    </string-array>
+    <string-array name="road_corner_entries">
+        <item>@string/road_corner_top_right</item>
+        <item>@string/road_corner_top_left</item>
+        <item>@string/road_corner_bottom_right</item>
+        <item>@string/road_corner_bottom_left</item>
+    </string-array>
+    <string-array name="road_corner_values">
+        <item>top_right</item>
+        <item>top_left</item>
+        <item>bottom_right</item>
+        <item>bottom_left</item>
+    </string-array>
 </resources>

@@ -171,6 +171,38 @@ object AppSettings {
             else -> AaAudioRoute.PHONE_DIRECT
         }
 
+    /** Off by default in this build: it is signed with a different key, so upstream updates can't install over it. */
     fun updateAutoCheck(context: Context): Boolean =
-        prefs(context).getBoolean("update_auto_check", true)
+        prefs(context).getBoolean("update_auto_check", false)
+
+    // ---- Speed & radar alerts (dev.caraalink.road.RoadAlerts) ----
+
+    fun roadSpeedAlerts(context: Context): Boolean =
+        prefs(context).getBoolean("road_speed_alerts", true)
+
+    /** Use the road's own limit from OpenStreetMap when it is known. */
+    fun roadUseOsmLimit(context: Context): Boolean =
+        prefs(context).getBoolean("road_use_osm_limit", true)
+
+    /** Limit used when the road's is unknown; null = no warning there. */
+    fun roadManualLimit(context: Context): Int? =
+        prefs(context).getString("road_manual_limit", "100")?.toIntOrNull()?.takeIf { it > 0 }
+
+    /** km/h over the limit before warning (GPS speed reads a little under the dashboard). */
+    fun roadTolerance(context: Context): Int =
+        prefs(context).getString("road_tolerance", "5")?.toIntOrNull() ?: 5
+
+    fun roadCameraAlerts(context: Context): Boolean =
+        prefs(context).getBoolean("road_camera_alerts", true)
+
+    /** "voice", "beep" or "off". */
+    fun roadAlertSound(context: Context): String =
+        prefs(context).getString("road_alert_sound", "voice") ?: "voice"
+
+    fun roadOverlay(context: Context): Boolean =
+        prefs(context).getBoolean("road_overlay", true)
+
+    /** "top_right", "top_left", "bottom_right" or "bottom_left". */
+    fun roadOverlayCorner(context: Context): String =
+        prefs(context).getString("road_overlay_corner", "top_right") ?: "top_right"
 }

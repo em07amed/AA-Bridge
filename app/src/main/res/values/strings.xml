@@ -103,4 +103,36 @@
     <string name="tile_link">Link</string>
     <string name="link_wireless_short">Wireless</string>
     <string name="link_cable_short">Cable</string>
+    <!-- Speed & radar alerts (dev.caraalink.road) -->
+    <string name="road_category">Speed &amp; radar alerts</string>
+    <string name="road_speed_alerts_title">Speed warning</string>
+    <string name="road_speed_alerts_summary">Warn when you go over the limit</string>
+    <string name="road_use_osm_limit_title">Use the road\'s speed limit</string>
+    <string name="road_use_osm_limit_summary">From OpenStreetMap when the road has one. Data in Egypt is incomplete.</string>
+    <string name="road_manual_limit_title">Limit when the road\'s is unknown</string>
+    <string name="road_tolerance_title">Warn when over the limit by</string>
+    <string name="road_camera_alerts_title">Speed camera alerts</string>
+    <string name="road_camera_alerts_summary">600 m before a camera. On the car screen, long-press your speed to save a camera, or the camera banner to remove a wrong one.</string>
+    <string name="road_alert_sound_title">Alert sound</string>
+    <string name="road_overlay_title">Show speed on the car screen</string>
+    <string name="road_overlay_summary">Speed, limit and the next camera, over Android Auto. Tap it to mute.</string>
+    <string name="road_overlay_corner_title">Position on the car screen</string>
+    <string name="road_kmh">km/h</string>
+    <string name="road_camera_banner">📷 %1$d m</string>
+    <string name="road_say_speeding">Slow down. You are at %1$d, the limit is %2$d.</string>
+    <string name="road_say_camera_far">Speed camera in %1$d metres. Limit %2$d.</string>
+    <string name="road_say_camera_far_nolimit">Speed camera in %1$d metres.</string>
+    <string name="road_say_camera_near">Slow down. Camera ahead, limit %1$d.</string>
+    <string name="road_note_camera_added">Camera saved here</string>
+    <string name="road_note_camera_removed">Camera removed</string>
+    <string name="road_note_muted">Alerts muted</string>
+    <string name="road_note_unmuted">Alerts on</string>
+    <string name="road_sound_voice">Voice</string>
+    <string name="road_sound_beep">Beep</string>
+    <string name="road_off">Off</string>
+    <string name="road_corner_top_right">Top right</string>
+    <string name="road_corner_top_left">Top left</string>
+    <string name="road_corner_bottom_right">Bottom right</string>
+    <string name="road_corner_bottom_left">Bottom left</string>
+    <string name="road_kmh_value">%1$d km/h</string>
 </resources>
