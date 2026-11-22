@@ -24,10 +24,12 @@ import androidx.compose.ui.unit.dp
 import dev.caraalink.BuildConfig
 import dev.caraalink.R
 
-private const val AUTHOR_URL = "https://github.com/alimorgaan"
+private const val AUTHOR_URL = "https://github.com/em07amed"
+// GPL-3.0: the original author stays credited, and this modified build says it is one.
+private const val ORIGINAL_URL = "https://github.com/alimorgaan/AA-Bridge"
 private const val CREDIT_URL = "https://github.com/JObersi10/CarAALink"
-private const val LICENSE_URL = "https://github.com/alimorgaan/AA-Bridge/blob/main/LICENSE"
-private const val SOURCE_URL = "https://github.com/alimorgaan/AA-Bridge"
+private const val LICENSE_URL = "https://github.com/em07amed/AA-Bridge/blob/speed-radar-alerts/LICENSE"
+private const val SOURCE_URL = "https://github.com/em07amed/AA-Bridge/tree/speed-radar-alerts"
 
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
@@ -50,6 +52,7 @@ fun AboutScreen(onBack: () -> Unit) {
             Text(BuildConfig.VERSION_NAME, style = MaterialTheme.typography.bodyLarge, color = Dash.Muted)
             Spacer(Modifier.height(20.dp))
             Link(stringResource(R.string.made_by), AUTHOR_URL)
+            Link(stringResource(R.string.about_original), ORIGINAL_URL)
             Link(stringResource(R.string.about_credit), CREDIT_URL)
             Link(stringResource(R.string.about_license), LICENSE_URL)
             Link(stringResource(R.string.about_source), SOURCE_URL)

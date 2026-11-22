@@ -56,7 +56,7 @@ data class RoadState(
  * are called on that thread and must post to their own.
  */
 object RoadAlerts {
-    private const val UA = "AABridge-RoadAlerts/1.0 (+https://github.com/alimorgaan/AA-Bridge)"
+    private const val UA = "AABridge-RoadAlerts/1.0 (+https://github.com/em07amed/AA-Bridge)"
     private val ENDPOINTS = listOf(
         "https://overpass-api.de/api/interpreter",
         "https://overpass.kumi.systems/api/interpreter",
