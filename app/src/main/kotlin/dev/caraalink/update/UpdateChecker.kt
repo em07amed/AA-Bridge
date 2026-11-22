@@ -28,7 +28,7 @@ import java.net.URL
  */
 object UpdateChecker {
 
-    private const val OWNER = "alimorgaan"
+    private const val OWNER = "em07amed" // the alerts fork; upstream builds use another signing key
     private const val REPO = "AA-Bridge"
     private const val CHANNEL_ID = "app_updates"
     private const val NOTIFICATION_ID = 4
@@ -70,8 +70,16 @@ object UpdateChecker {
         val body = get("https://api.github.com/repos/$OWNER/$REPO/releases/latest") ?: return null
         val json = JSONObject(body)
         val tag = json.getString("tag_name").removePrefix("v")
-        if (tag == BuildConfig.VERSION_NAME) return null
+        if (!isNewer(tag, BuildConfig.VERSION_NAME)) return null
         return UpdateInfo("Update available: v$tag", json.getString("html_url"), apkAssetUrl(json))
+    }
+
+    /** "alerts-build-12" is newer than "alerts-build-9"; anything unparseable never prompts. */
+    internal fun isNewer(tag: String, current: String): Boolean {
+        fun build(v: String) = v.substringAfterLast('-').toIntOrNull()
+        val t = build(tag) ?: return false
+        val c = build(current) ?: return false
+        return tag.startsWith("alerts-build-") && t > c
     }
 
     /** First `.apk` asset's direct download URL, or null if the release has none attached. */

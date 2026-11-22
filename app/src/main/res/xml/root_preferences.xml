@@ -164,7 +164,7 @@
             android:key="update_auto_check"
             android:title="Check automatically"
             android:summary="Check once per app launch; only notifies when something newer actually exists"
-            android:defaultValue="false" />
+            android:defaultValue="true" />
         <Preference
             android:key="check_for_updates_now"
             android:title="Check for updates now" />

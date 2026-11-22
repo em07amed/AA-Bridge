@@ -171,9 +171,9 @@ object AppSettings {
             else -> AaAudioRoute.PHONE_DIRECT
         }
 
-    /** Off by default in this build: it is signed with a different key, so upstream updates can't install over it. */
+    /** Checks the alerts fork's releases (em07amed/AA-Bridge), not upstream's. */
     fun updateAutoCheck(context: Context): Boolean =
-        prefs(context).getBoolean("update_auto_check", false)
+        prefs(context).getBoolean("update_auto_check", true)
 
     // ---- Speed & radar alerts (dev.caraalink.road.RoadAlerts) ----
 

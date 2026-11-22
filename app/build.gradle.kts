@@ -23,8 +23,11 @@ android {
         applicationId = "io.github.alimorgaan.aabridge"
         minSdk = 29
         targetSdk = 34
-        versionCode = 6
-        versionName = "1.2.1-alerts"
+        // Alerts builds: the version is the CI run number, matching the fork's release tag
+        // "alerts-build-N", so the update check compares against em07amed/AA-Bridge releases.
+        val alertsBuild = (System.getenv("GITHUB_RUN_NUMBER") ?: "0").toInt()
+        versionCode = 1000 + alertsBuild
+        versionName = "alerts-build-$alertsBuild"
         buildConfigField("String", "GIT_SHA", "\"${gitSha()}\"")
     }
 
