@@ -4,17 +4,31 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- The bridge mark from docs/logo.svg, centred in the adaptive-icon safe zone. -->
+    <!-- Turn arrow with a speed-limit sign: AA Bridge with speed and radar alerts. Scaled into the adaptive-icon safe zone (66dp circle). -->
     <group
-        android:scaleX="0.45"
-        android:scaleY="0.45"
-        android:translateX="12.6"
-        android:translateY="19.15">
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.7"
+        android:scaleY="0.7">
         <path
-            android:pathData="M32,102 H152 M44,102 Q92,4 140,102 M68,102 V65 M92,102 V53 M116,102 V65"
+            android:pathData="M34,82 L34,66 Q34,44 58,40 L66,39"
             android:strokeColor="#FFFFFFFF"
-            android:strokeWidth="12"
+            android:strokeWidth="10"
             android:strokeLineCap="round"
             android:strokeLineJoin="round" />
+        <path
+            android:pathData="M60,26 L78,39 L60,52 Z"
+            android:fillColor="#FFFFFFFF"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeWidth="4"
+            android:strokeLineJoin="round" />
+        <path
+            android:pathData="M59,74 a15,15 0 1,0 30,0 a15,15 0 1,0 -30,0"
+            android:fillColor="#FFFFFFFF"
+            android:strokeColor="#FFE53935"
+            android:strokeWidth="5" />
+        <path
+            android:pathData="M68.73 74.07Q67.97 74.07 67.58 74.62Q67.2 75.17 67.2 76.27Q67.2 77.37 67.58 77.92Q67.97 78.47 68.73 78.47Q69.5 78.47 69.88 77.92Q70.27 77.37 70.27 76.27Q70.27 75.17 69.88 74.62Q69.5 74.07 68.73 74.07ZM72.32 68.05V70.37Q71.61 69.99 70.97 69.81Q70.34 69.63 69.74 69.63Q68.44 69.63 67.71 70.43Q66.98 71.23 66.87 72.81Q67.36 72.4 67.94 72.2Q68.53 71.99 69.21 71.99Q70.95 71.99 72.01 73.11Q73.07 74.24 73.07 76.06Q73.07 78.07 71.88 79.29Q70.69 80.5 68.7 80.5Q66.5 80.5 65.29 78.85Q64.09 77.2 64.09 74.17Q64.09 71.07 65.5 69.29Q66.91 67.52 69.36 67.52Q70.14 67.52 70.87 67.65Q71.61 67.79 72.32 68.05ZM81.01 73.98Q81.01 71.63 80.61 70.67Q80.21 69.71 79.28 69.71Q78.34 69.71 77.94 70.67Q77.54 71.63 77.54 73.98Q77.54 76.35 77.94 77.33Q78.34 78.3 79.28 78.3Q80.2 78.3 80.6 77.33Q81.01 76.35 81.01 73.98ZM83.91 74Q83.91 77.12 82.7 78.81Q81.49 80.5 79.28 80.5Q77.05 80.5 75.84 78.81Q74.63 77.12 74.63 74Q74.63 70.88 75.84 69.19Q77.05 67.5 79.28 67.5Q81.49 67.5 82.7 69.19Q83.91 70.88 83.91 74Z"
+            android:fillColor="#FF111111" />
     </group>
 </vector>
