@@ -162,7 +162,7 @@ object UpdateChecker {
         dest.delete()
         val request = DownloadManager.Request(Uri.parse(apkUrl))
             .setTitle(title)
-            .setDescription("Downloading AA Bridge update")
+            .setDescription("Downloading Drive Bridge update")
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
             .setDestinationUri(Uri.fromFile(dest))
         val manager = context.getSystemService(DownloadManager::class.java)
