@@ -104,8 +104,10 @@
     <string name="road_speed_alerts_title">تحذير السرعة</string>
     <string name="road_speed_alerts_summary">ينبّهك لما تعدّي الحد</string>
     <string name="road_use_osm_limit_title">استخدم حد الطريق</string>
-    <string name="road_use_osm_limit_summary">من OpenStreetMap لو الطريق متسجّل له حد. البيانات في مصر ناقصة.</string>
-    <string name="road_manual_limit_title">الحد لما حد الطريق مش معروف</string>
+    <string name="road_use_osm_limit_summary">حد الطريق من OpenStreetMap (حلقة حمرا)، ولو مش متسجّل فالحد القانوني لنوع الطريق: 60 جوه المدن، 90 بين المدن، 100 على الطرق السريعة (حلقة برتقالي).</string>
+    <string name="road_report_parked_title">قول لـ Android Auto إن العربية راكنة</string>
+    <string name="road_report_parked_summary">لما سرعة الـ GPS تفضل صفر 5 ثواني. بيخلّي Android Auto يسمح بحاجات الركن زي الفيديو والكيبورد.</string>
+    <string name="road_manual_limit_title">الحد لما الطريق مش معروف</string>
     <string name="road_tolerance_title">ينبّه لما تعدّي الحد بـ</string>
     <string name="road_camera_alerts_title">تنبيه الرادارات</string>
     <string name="road_camera_alerts_summary">قبل الرادار بـ 600 متر. على شاشة العربية: دوس مطوّل على السرعة عشان تسجّل رادار، أو على شريط الرادار عشان تشيل رادار غلط.</string>

@@ -84,6 +84,8 @@ object AaServiceDiscovery {
     /** `SensorType` (sensorsource/message/SensorType.proto) */
     const val SENSOR_LOCATION = 1
     const val SENSOR_NIGHT_MODE = 10
+    const val SENSOR_PARKING_BRAKE = 7
+    const val SENSOR_GEAR = 8
     const val SENSOR_DRIVING_STATUS_DATA = 13
 
     /** Control-channel channel ids (`ChannelId.hpp`). */
@@ -377,6 +379,9 @@ object AaServiceDiscovery {
                     .message(1, AaProtobuf.Writer().int(1, SENSOR_DRIVING_STATUS_DATA).build())
                     .message(1, AaProtobuf.Writer().int(1, SENSOR_LOCATION).build())
                     .message(1, AaProtobuf.Writer().int(1, SENSOR_NIGHT_MODE).build())
+                    // Parked or moving, from the phone's GPS (dev.caraalink.road.RoadAlerts.parked).
+                    .message(1, AaProtobuf.Writer().int(1, SENSOR_PARKING_BRAKE).build())
+                    .message(1, AaProtobuf.Writer().int(1, SENSOR_GEAR).build())
                     .build(),
             )
             .build()

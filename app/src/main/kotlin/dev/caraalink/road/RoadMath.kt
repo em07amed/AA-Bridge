@@ -24,13 +24,15 @@ class SpeedCamera(
     val mine: Boolean get() = id < 0
 }
 
-/** An OSM way with its limit each way (null = unknown). */
+/** An OSM way with its signed limit each way (null = unknown). */
 class Road(
     val id: Long,
     val pts: List<LatLon>,
     val fwd: Int?,
     val back: Int?,
     val oneway: Boolean,
+    /** The legal default for this kind of road when no limit is signed (see [RoadMath.defaultLimit]). */
+    val estimate: Int? = null,
 )
 
 data class RoadMatch(val road: Road, val forward: Boolean) {
@@ -62,6 +64,28 @@ object RoadMath {
         val n = m.groupValues[1].toDouble()
         val kmh = if (v.contains("mph")) n * 1.609 else n
         return kmh.roundToInt().takeIf { it in 5..200 }
+    }
+
+    /**
+     * The legal limit for a road with no maxspeed tag, from its zone tag
+     * ("EG:urban" in maxspeed, maxspeed:type or source:maxspeed) or else its
+     * class. Egypt: 60 in built-up areas, 90 between cities, 100 on motorways
+     * (some desert roads are signed higher -- those carry a maxspeed tag).
+     */
+    fun defaultLimit(highway: String?, zone: String?): Int? {
+        val link = highway?.endsWith("_link") == true
+        when (zone?.trim()?.uppercase()) {
+            "EG:URBAN" -> return 60
+            "EG:RURAL" -> return 90
+            "EG:MOTORWAY", "EG:TRUNK" -> return 100
+        }
+        return when (highway?.removeSuffix("_link")) {
+            "motorway" -> if (link) 60 else 100
+            "trunk" -> if (link) 60 else 90
+            "primary", "secondary", "tertiary", "unclassified", "residential" -> 60
+            "living_street", "service" -> 40
+            else -> null
+        }
     }
 
     private val cardinal = mapOf(
@@ -124,7 +148,7 @@ object RoadMath {
         for (r in roads) {
             for (i in 1 until r.pts.size) {
                 val d = toSegmentM(at, r.pts[i - 1], r.pts[i])
-                if (d > 22) continue
+                if (d > 30) continue // phone GPS in the city is often 10-25 m off
                 var score = d
                 var fwd = true
                 if (hasDir) {
@@ -150,7 +174,34 @@ object RoadMath {
      * our direction of travel. Cameras more than 1 km away are re-armed so
      * they announce again next time.
      */
-    fun cameraAhead(cameras: List<SpeedCamera>, at: LatLon, heading: Double, moving: Boolean): CameraAhead? {
+    /**
+     * Direction a camera watches when OSM doesn't say: the direction of the
+     * one-way carriageway it stands on. Divided roads are mapped as two one-way
+     * ways, so this tells a camera on the other side of the road from ours.
+     */
+    fun inferHeading(c: SpeedCamera, roads: List<Road>): Double? {
+        var best: Double? = null
+        var bestD = 15.0
+        for (r in roads) {
+            if (!r.oneway) continue
+            for (i in 1 until r.pts.size) {
+                val d = toSegmentM(c.at, r.pts[i - 1], r.pts[i])
+                if (d < bestD) {
+                    bestD = d
+                    best = bearing(r.pts[i - 1], r.pts[i])
+                }
+            }
+        }
+        return best
+    }
+
+    fun cameraAhead(
+        cameras: List<SpeedCamera>,
+        at: LatLon,
+        heading: Double,
+        moving: Boolean,
+        roads: List<Road> = emptyList(),
+    ): CameraAhead? {
         var best: CameraAhead? = null
         for (c in cameras) {
             val d = distanceM(at, c.at)
@@ -162,8 +213,8 @@ object RoadMath {
             if (moving && !heading.isNaN()) {
                 val diff = abs(angleDiff(bearing(at, c.at), heading))
                 if (diff > 60) continue
-                if (d * sin(diff * PI / 180) > 35) continue
-                val ch = c.heading
+                if (d * sin(diff * PI / 180) > 25) continue
+                val ch = c.heading ?: inferHeading(c, roads)
                 if (ch != null && abs(angleDiff(ch, heading)) > 60) continue
             }
             if (best == null || d < best.meters) best = CameraAhead(c, d)

@@ -109,8 +109,10 @@
     <string name="road_speed_alerts_title">Speed warning</string>
     <string name="road_speed_alerts_summary">Warn when you go over the limit</string>
     <string name="road_use_osm_limit_title">Use the road\'s speed limit</string>
-    <string name="road_use_osm_limit_summary">From OpenStreetMap when the road has one. Data in Egypt is incomplete.</string>
-    <string name="road_manual_limit_title">Limit when the road\'s is unknown</string>
+    <string name="road_use_osm_limit_summary">The road's limit from OpenStreetMap (red ring), else the legal default for that kind of road: 60 in town, 90 between cities, 100 on motorways (orange ring).</string>
+    <string name="road_report_parked_title">Tell Android Auto when parked</string>
+    <string name="road_report_parked_summary">When GPS speed has been 0 for 5 seconds. Lets Android Auto allow parked-only features such as video and the keyboard.</string>
+    <string name="road_manual_limit_title">Limit when the road is unknown</string>
     <string name="road_tolerance_title">Warn when over the limit by</string>
     <string name="road_camera_alerts_title">Speed camera alerts</string>
     <string name="road_camera_alerts_summary">600 m before a camera. On the car screen, long-press your speed to save a camera, or the camera banner to remove a wrong one.</string>

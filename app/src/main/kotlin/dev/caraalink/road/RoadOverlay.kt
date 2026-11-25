@@ -128,7 +128,8 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
         last = s
         val u = unit
 
-        // Limit sign: red ring for the road's own limit, grey for the driver's fallback.
+        // Limit sign: red ring = signed on this road (OpenStreetMap), orange = the legal
+        // default for this kind of road, grey = the driver's own fallback.
         val limit = s.limit
         sign.visibility = if (limit != null && s.speedKmh != null) View.VISIBLE else View.GONE
         if (limit != null) {
@@ -136,7 +137,14 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
             sign.background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
                 setColor(Color.WHITE)
-                setStroke((u * 1.8f).toInt().coerceAtLeast(2), if (s.limitFromRoad) RED else GREY)
+                setStroke(
+                    (u * 1.8f).toInt().coerceAtLeast(2),
+                    when {
+                        s.limitFromRoad -> RED
+                        s.limitEstimated -> ORANGE
+                        else -> GREY
+                    },
+                )
             }
         }
 
@@ -172,6 +180,7 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
     private companion object {
         val RED = 0xFFE53935.toInt()
         val GREY = 0xFF9E9E9E.toInt()
+        val ORANGE = 0xFFFB8C00.toInt()
         val DARK = 0xCC111111.toInt()
     }
 }

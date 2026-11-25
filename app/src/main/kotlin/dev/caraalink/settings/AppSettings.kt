@@ -199,6 +199,10 @@ object AppSettings {
     fun roadAlertSound(context: Context): String =
         prefs(context).getString("road_alert_sound", "voice") ?: "voice"
 
+    /** Tell Android Auto the car is parked when GPS speed has been ~0 for a few seconds. */
+    fun roadReportParked(context: Context): Boolean =
+        prefs(context).getBoolean("road_report_parked", true)
+
     fun roadOverlay(context: Context): Boolean =
         prefs(context).getBoolean("road_overlay", true)
 

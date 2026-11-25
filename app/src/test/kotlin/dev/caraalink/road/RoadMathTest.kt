@@ -92,4 +92,27 @@ class RoadMathTest {
         assertFalse(far.nearSaid)
         assertTrue(SpeedCamera(-5, cairo, null, null).mine)
     }
+
+    @Test
+    fun egyptDefaultLimits() {
+        assertEquals(60, RoadMath.defaultLimit("primary", "EG:urban"))
+        assertEquals(90, RoadMath.defaultLimit("primary", "EG:rural"))
+        assertEquals(100, RoadMath.defaultLimit("motorway", null))
+        assertEquals(60, RoadMath.defaultLimit("motorway_link", null))
+        assertEquals(90, RoadMath.defaultLimit("trunk", null))
+        assertEquals(60, RoadMath.defaultLimit("residential", null))
+        assertNull(RoadMath.defaultLimit("footway", null))
+    }
+
+    @Test
+    fun cameraOnTheOtherCarriagewayIsSkipped() {
+        // Divided road: northbound carriageway at x=0, southbound 18 m east of it.
+        val north = Road(1, listOf(offset(cairo, -500.0, 0.0), offset(cairo, 500.0, 0.0)), 80, null, true)
+        val south = Road(2, listOf(offset(cairo, 500.0, 18.0), offset(cairo, -500.0, 18.0)), 80, null, true)
+        val theirs = SpeedCamera(1, offset(cairo, 300.0, 18.0), 80, null) // on the southbound side, no direction tag
+        val ours = SpeedCamera(2, offset(cairo, 450.0, 0.0), 80, null)
+        assertEquals(180.0, RoadMath.inferHeading(theirs, listOf(north, south))!!, 1.0)
+        val hit = RoadMath.cameraAhead(listOf(theirs, ours), cairo, 0.0, moving = true, roads = listOf(north, south))
+        assertEquals(2L, hit!!.camera.id)
+    }
 }

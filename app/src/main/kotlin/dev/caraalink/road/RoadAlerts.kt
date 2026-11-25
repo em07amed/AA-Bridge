@@ -35,7 +35,10 @@ data class RoadState(
     val speedKmh: Int? = null,
     /** Limit in force: the road's own when known, else the driver's manual one; null = none. */
     val limit: Int? = null,
+    /** The road's signed limit from OpenStreetMap. */
     val limitFromRoad: Boolean = false,
+    /** The legal default for this kind of road (Egypt: 60 city, 90 intercity, 100 motorway). */
+    val limitEstimated: Boolean = false,
     val over: Boolean = false,
     /** Metres to the next camera on our line, when one is within 1 km. */
     val cameraM: Int? = null,
@@ -68,6 +71,17 @@ object RoadAlerts {
     @Volatile
     var state = RoadState()
         private set
+
+    /**
+     * true = parked (GPS speed under 3 km/h for 5 s), false = moving (over 8 km/h),
+     * null = not known yet. Read by the Android Auto session to report the parking
+     * brake / gear, so Android Auto can allow parked-only features. A lost fix keeps
+     * the last state, so a tunnel never turns into "parked".
+     */
+    @Volatile
+    var parked: Boolean? = null
+        private set
+    private var stillSince = 0L
 
     fun addListener(l: (RoadState) -> Unit) {
         listeners += l
@@ -108,6 +122,7 @@ object RoadAlerts {
 
     private var roadId: Long? = null
     private var roadLimit: Int? = null
+    private var roadEstimate: Int? = null
     private var candidate: Long? = null
     private var roadSeen = 0L
 
@@ -145,6 +160,8 @@ object RoadAlerts {
         if (users == 0) return
         users--
         if (users > 0) return
+        parked = null
+        stillSince = 0L
         handler?.post {
             stopGps()
             speeding = false
@@ -233,6 +250,7 @@ object RoadAlerts {
         last = at
         lastFixAt = System.currentTimeMillis()
         speedKmh = if (loc.hasSpeed()) loc.speed * 3.6 else null
+        updateParked(speedKmh)
         if (loc.hasBearing() && loc.speed > 2f) heading = loc.bearing.toDouble()
 
         val f = fetchedAt
@@ -240,10 +258,28 @@ object RoadAlerts {
         if (f == null || RoadMath.distanceM(f, at) > 600 || now - fetchedTime > 15 * 60_000) fetch(at)
 
         matchRoad(at)
-        val (limit, _) = currentLimit(ctx)
+        val limit = currentLimit(ctx).limit
         checkSpeed(ctx, limit)
         checkCameras(ctx, at, limit)
         publish()
+    }
+
+    private fun updateParked(kmh: Double?) {
+        if (kmh == null) return
+        val now = System.currentTimeMillis()
+        if (kmh < 3) {
+            if (stillSince == 0L) stillSince = now
+            if (now - stillSince >= 5_000 && parked != true) {
+                parked = true
+                logger?.log("parked")
+            }
+        } else {
+            stillSince = 0L
+            if (kmh > 8 && parked != false) {
+                parked = false
+                logger?.log("moving")
+            }
+        }
     }
 
     /** Republishes every 2 s so a lost GPS fix clears the speed on screen. */
@@ -259,11 +295,18 @@ object RoadAlerts {
 
     // ---------- limits ----------
 
-    /** (limit, fromRoad): the road's limit when known and enabled, else the manual one (null = off). */
-    private fun currentLimit(ctx: Context): Pair<Int?, Boolean> {
-        val road = roadLimit
-        return if (AppSettings.roadUseOsmLimit(ctx) && road != null) road to true
-        else AppSettings.roadManualLimit(ctx) to false
+    private class Limit(val limit: Int?, val fromRoad: Boolean, val estimated: Boolean)
+
+    /**
+     * The road's signed limit, else the legal default for its kind of road,
+     * else the driver's manual limit (null = off).
+     */
+    private fun currentLimit(ctx: Context): Limit {
+        if (AppSettings.roadUseOsmLimit(ctx)) {
+            roadLimit?.let { return Limit(it, fromRoad = true, estimated = false) }
+            roadEstimate?.let { return Limit(it, fromRoad = false, estimated = true) }
+        }
+        return Limit(AppSettings.roadManualLimit(ctx), fromRoad = false, estimated = false)
     }
 
     /** Only switches road after the new one wins twice, so a bridge or a side street can't flicker it. */
@@ -279,10 +322,12 @@ object RoadAlerts {
             candidate = null
             roadId = m.road.id
             roadLimit = m.limit
+            roadEstimate = m.road.estimate
             roadSeen = now
         } else if (now - roadSeen > 15_000) {
             roadId = null
             roadLimit = null
+            roadEstimate = null
         }
     }
 
@@ -317,7 +362,7 @@ object RoadAlerts {
         }
         val kmh = speedKmh ?: 0.0
         val moving = kmh > 10 && !heading.isNaN()
-        val hit = RoadMath.cameraAhead(cameras, at, heading, moving)
+        val hit = RoadMath.cameraAhead(cameras, at, heading, moving, roads)
         next = hit
         if (hit == null || !moving) return
         val c = hit.camera
@@ -450,12 +495,15 @@ object RoadAlerts {
                     if (pts.size < 2) continue
                     val all = RoadMath.parseMaxspeed(tag("maxspeed"))
                     val oneway = tag("oneway") == "yes" || tag("junction") == "roundabout" || tag("highway") == "motorway"
+                    val zone = listOf(tag("maxspeed"), tag("maxspeed:type"), tag("source:maxspeed"))
+                        .firstOrNull { it != null && it.contains(':') }
                     roads += Road(
                         e.getLong("id"),
                         pts,
                         RoadMath.parseMaxspeed(tag("maxspeed:forward")) ?: all,
                         RoadMath.parseMaxspeed(tag("maxspeed:backward")) ?: all,
                         oneway,
+                        RoadMath.defaultLimit(tag("highway"), zone),
                     )
                 }
             }
@@ -548,13 +596,15 @@ object RoadAlerts {
 
     private fun publish() {
         val ctx = app ?: return
-        val (limit, fromRoad) = currentLimit(ctx)
+        val lim = currentLimit(ctx)
+        val limit = lim.limit
         val kmh = speedKmh
         val cam = next?.takeIf { AppSettings.roadCameraAlerts(ctx) }
         val s = RoadState(
             speedKmh = kmh?.roundToInt(),
             limit = limit,
-            limitFromRoad = fromRoad,
+            limitFromRoad = lim.fromRoad,
+            limitEstimated = lim.estimated,
             over = kmh != null && limit != null && kmh > limit + AppSettings.roadTolerance(ctx),
             cameraM = cam?.meters?.roundToInt(),
             cameraLimit = cam?.camera?.limit ?: cam?.let { limit },

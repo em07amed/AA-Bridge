@@ -67,6 +67,14 @@ class AaSessionProbe(
         private const val TAG = "AaSessionProbe"
         private const val SHUTDOWN_ACK_TIMEOUT_MS = 1_000L
         private const val SENSOR_NIGHT_MODE = 10L
+        private const val SENSOR_PARKING_BRAKE = 7L
+        private const val SENSOR_GEAR = 8L
+        private const val SENSOR_DRIVING_STATUS = 13L
+        /** GearData.gear (sensorsource/message/Gear.proto). */
+        private const val GEAR_DRIVE = 100
+        private const val GEAR_PARK = 101
+        /** DrivingStatus bits while moving: no video, no keyboard, no config, short messages (voice stays on). */
+        private const val DRIVE_STATUS_MOVING = 1 or 2 or 8 or 16
 
         @Volatile
         var active: AaSessionProbe? = null
@@ -491,6 +499,26 @@ class AaSessionProbe(
             var lastPingSentAt = System.currentTimeMillis()
             var nightSensorStarted = false
             var nightSent: Boolean? = null
+            // Parked/moving for Android Auto (video while parked, keyboard, ...), only for
+            // the sensors it asked for and only once GPS has decided -- before that, and
+            // with the setting off, Android Auto keeps its own behaviour.
+            val startedSensors = mutableSetOf<Long>()
+            var parkedSent: Boolean? = null
+            fun sendParkedIfChanged() {
+                if (!dev.caraalink.settings.AppSettings.roadReportParked(context)) return
+                val parked = dev.caraalink.road.RoadAlerts.parked ?: return
+                if (parked == parkedSent) return
+                val w = AaProtobuf.Writer()
+                var any = false
+                if (SENSOR_PARKING_BRAKE in startedSensors) { w.message(7, AaProtobuf.Writer().bool(1, parked).build()); any = true }
+                if (SENSOR_GEAR in startedSensors) { w.message(8, AaProtobuf.Writer().int(1, if (parked) GEAR_PARK else GEAR_DRIVE).build()); any = true }
+                if (SENSOR_DRIVING_STATUS in startedSensors) { w.message(13, AaProtobuf.Writer().int(1, if (parked) 0 else DRIVE_STATUS_MOVING).build()); any = true }
+                if (!any) return
+                parkedSent = parked
+                logger.log("TX SENSOR_EVENT parked=$parked")
+                runCatching { channel.sendChannelSpecific(AaServiceDiscovery.CHANNEL_SENSOR, AaFraming.MSG_SENSOR_EVENT, w.build()) }
+                    .onFailure { logger.log("SENSOR_EVENT (parked) send failed: $it") }
+            }
             fun sendNightIfChanged() {
                 val night = NightMode.current(context) ?: return
                 if (night == nightSent) return
@@ -509,6 +537,7 @@ class AaSessionProbe(
                         .onFailure { logger.log("proactive PING_REQUEST send failed: $it") }
                     if (nightSensorStarted) sendNightIfChanged()
                 }
+                sendParkedIfChanged()
                 val message = channel.receiveMessage()
                 if (message.channelId != AaFraming.CHANNEL_CONTROL) {
                     val chId = AaFraming.controlMessageId(message.payload)
@@ -704,6 +733,11 @@ class AaSessionProbe(
                         if (sensorType == SENSOR_NIGHT_MODE) {
                             nightSensorStarted = true
                             sendNightIfChanged()
+                        }
+                        if (sensorType != null && sensorType in setOf(SENSOR_PARKING_BRAKE, SENSOR_GEAR, SENSOR_DRIVING_STATUS)) {
+                            startedSensors += sensorType
+                            parkedSent = null // the newly started sensor needs the current state too
+                            sendParkedIfChanged()
                         }
                     }
                     continue
