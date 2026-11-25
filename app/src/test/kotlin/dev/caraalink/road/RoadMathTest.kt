@@ -147,9 +147,22 @@ class RoadMathTest {
 
     @Test
     fun namesOnlyApplyToMainRoads() {
-        assertEquals(100, RoadMath.estimateLimit("trunk", null, "طريق الإسكندرية مطروح"))
-        assertEquals(60, RoadMath.estimateLimit("residential", null, "شارع مطروح")) // side street: legal default
-        assertEquals(80, RoadMath.estimateLimit("primary_link", null, "محور جوزيف تيتو"))
-        assertEquals(90, RoadMath.estimateLimit("trunk", null, "طريق بلا اسم معروف"))
+        assertEquals(100, RoadMath.estimateLimit("trunk", null, null, "طريق الإسكندرية مطروح"))
+        assertEquals(60, RoadMath.estimateLimit("residential", null, null, "شارع مطروح")) // side street: legal default
+        assertEquals(80, RoadMath.estimateLimit("primary_link", null, null, "محور جوزيف تيتو"))
+        assertEquals(90, RoadMath.estimateLimit("trunk", null, null, "طريق بلا اسم معروف"))
+    }
+
+    @Test
+    fun dakahlia() {
+        val mansoura = LatLon(31.0409, 31.3785)
+        assertEquals(60, RoadMath.namedLimit("الطريق الدائري بالمنصورة"))
+        assertEquals(90, RoadMath.namedLimit("طريق المنصورة ميت غمر"))
+        assertEquals(90, RoadMath.namedLimit("طريق المنصورة دكرنس المنزلة"))
+        assertEquals(90, RoadMath.namedLimit("طريق منية النصر"))
+        assertEquals(90, RoadMath.estimateLimit("primary", null, mansoura, "طريق المنصورة طناح"))
+        assertEquals(40, RoadMath.estimateLimit("secondary", null, mansoura, "شارع الجمهورية")) // city street
+        assertEquals(60, RoadMath.estimateLimit("secondary", null, LatLon(30.05, 31.24), "شارع الجمهورية"))
+        assertEquals(90, RoadMath.namedLimit("الطريق الدائري")) // Cairo ring road unchanged
     }
 }

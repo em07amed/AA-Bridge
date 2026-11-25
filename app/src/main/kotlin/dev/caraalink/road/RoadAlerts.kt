@@ -503,7 +503,7 @@ object RoadAlerts {
                         RoadMath.parseMaxspeed(tag("maxspeed:forward")) ?: all,
                         RoadMath.parseMaxspeed(tag("maxspeed:backward")) ?: all,
                         oneway,
-                        RoadMath.estimateLimit(tag("highway"), zone, tag("name"), tag("name:ar"), tag("name:en"), tag("ref")),
+                        RoadMath.estimateLimit(tag("highway"), zone, pts.first(), tag("name"), tag("name:ar"), tag("name:en"), tag("ref")),
                     )
                 }
             }

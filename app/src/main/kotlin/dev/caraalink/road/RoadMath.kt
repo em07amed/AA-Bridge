@@ -98,6 +98,13 @@ object RoadMath {
      * on signed sections; a maxspeed tag on the way always wins over this table.
      */
     private val NAMED = listOf(
+        // Dakahlia (Dakahlia traffic department): Mansoura ring road 60 since 2025;
+        // the governorate's main roads 90 for private cars.
+        Named(60, listOf("دائري", "المنصوره")),
+        Named(90, listOf("ميت غمر")), Named(90, listOf("السنبلاوين")), Named(90, listOf("جمصه")),
+        Named(90, listOf("دكرنس")), Named(90, listOf("المنزله")), Named(90, listOf("منيه النصر")),
+        Named(90, listOf("طناح")), Named(90, listOf("المحموديه")), Named(90, listOf("بنها", "المنصوره")),
+        Named(90, listOf("دمياط", "الشرقي")),
         Named(120, listOf("دائري", "اقليمي")), Named(120, listOf("regional", "ring")),
         Named(120, listOf("دائري", "اوسطي")), Named(120, listOf("middle", "ring")),
         Named(90, listOf("دائري"), not = listOf("اقليمي", "اوسطي")),
@@ -146,10 +153,21 @@ object RoadMath {
      * road with a known name (so a side street that shares a name doesn't match),
      * else the legal default for its zone or class.
      */
-    fun estimateLimit(highway: String?, zone: String?, vararg names: String?): Int? {
+    fun estimateLimit(highway: String?, zone: String?, at: LatLon?, vararg names: String?): Int? {
         if (highway?.removeSuffix("_link") in MAJOR) namedLimit(*names)?.let { return it }
+        if (at != null && highway?.removeSuffix("_link") in TOWN_ROADS) cityLimit(at)?.let { return it }
         return defaultLimit(highway, zone)
     }
+
+    private class City(val center: LatLon, val radiusM: Double, val limit: Int)
+    private val TOWN_ROADS = setOf("primary", "secondary", "tertiary", "unclassified", "residential")
+
+    /** Cities with a lower limit on their own streets: Mansoura 40 (Dakahlia traffic department). */
+    private val CITIES = listOf(
+        City(LatLon(31.0409, 31.3785), 3_500.0, 40), // Mansoura
+    )
+
+    fun cityLimit(at: LatLon): Int? = CITIES.firstOrNull { distanceM(at, it.center) <= it.radiusM }?.limit
 
     /** Strips diacritics and folds alef/yeh/teh marbuta variants so OSM spellings match. */
     fun normalizeName(s: String): String = s.lowercase()
