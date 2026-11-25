@@ -131,4 +131,25 @@ class RoadMathTest {
         assertNull(RoadMath.namedLimit("شارع الهرم"))
         assertNull(RoadMath.namedLimit(null, null))
     }
+
+    @Test
+    fun governorateRoads() {
+        assertEquals(120, RoadMath.namedLimit("طريق القطامية العين السخنة"))
+        assertEquals(120, RoadMath.namedLimit("طريق القاهرة الإسكندرية الصحراوي"))
+        assertEquals(100, RoadMath.namedLimit("طريق الإسكندرية مطروح"))
+        assertEquals(90, RoadMath.namedLimit("طريق القاهرة الإسكندرية الزراعي"))
+        assertEquals(90, RoadMath.namedLimit("طريق مصر الإسماعيلية الصحراوي"))
+        assertEquals(100, RoadMath.namedLimit("طريق القاهرة السويس"))
+        assertEquals(100, RoadMath.namedLimit("الطريق الساحلي الدولي"))
+        assertEquals(90, RoadMath.namedLimit("طريق طنطا المحلة الزراعي"))
+        assertEquals(100, RoadMath.namedLimit(null, null, "Cairo-Suez Road"))
+    }
+
+    @Test
+    fun namesOnlyApplyToMainRoads() {
+        assertEquals(100, RoadMath.estimateLimit("trunk", null, "طريق الإسكندرية مطروح"))
+        assertEquals(60, RoadMath.estimateLimit("residential", null, "شارع مطروح")) // side street: legal default
+        assertEquals(80, RoadMath.estimateLimit("primary_link", null, "محور جوزيف تيتو"))
+        assertEquals(90, RoadMath.estimateLimit("trunk", null, "طريق بلا اسم معروف"))
+    }
 }

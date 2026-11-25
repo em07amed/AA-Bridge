@@ -94,7 +94,7 @@ object RoadMath {
     /**
      * Announced limits for major Egyptian roads that OpenStreetMap usually has no
      * maxspeed for (Ministry of Interior / General Traffic Department figures as
-     * reported in 2024-2026). More specific entries first. Some roads drop lower
+     * reported in 2024-2026, private cars). More specific entries first. Some roads drop lower
      * on signed sections; a maxspeed tag on the way always wins over this table.
      */
     private val NAMED = listOf(
@@ -119,11 +119,37 @@ object RoadMath {
         Named(120, listOf("شبرا", "بنها", "الحر")),
         Named(120, listOf("محور", "الضبعه")),
         Named(120, listOf("حلوان", "الكريمات")),
+        // Intercity and desert roads. Where reports disagree, the value most of them
+        // give; roads split by kilometre (Suez, Ismailia) take the lower section.
+        Named(120, listOf("سخنه")), Named(120, listOf("sokhna")),
+        Named(120, listOf("الاسكندريه", "صحراوي"), not = listOf("مطروح")),
+        Named(120, listOf("alexandria", "desert")),
+        Named(90, listOf("الاسماعيليه", "صحراوي")), Named(90, listOf("ismailia", "desert")),
+        Named(100, listOf("طريق", "السويس"), not = listOf("الاسماعيليه")), Named(100, listOf("suez road")),
+        Named(100, listOf("الزعفرانه")), Named(100, listOf("غارب")), Named(100, listOf("zafarana")),
+        Named(100, listOf("مطروح")), Named(100, listOf("matrouh")),
+        Named(100, listOf("الفيوم", "صحراوي")),
+        Named(100, listOf("بلبيس", "صحراوي")),
+        Named(100, listOf("وادي النطرون", "العلمين")),
+        Named(100, listOf("ساحلي")), Named(100, listOf("coastal road")),
         Named(90, listOf("الاسكندريه", "الزراعي")),
+        Named(90, listOf("زراعي")),
         Named(60, listOf("التسعين")),
         Named(60, listOf("كوبري", "اكتوبر")), Named(60, listOf("october bridge")),
         Named(50, listOf("نفق", "الازهر")), Named(50, listOf("azhar tunnel")),
     )
+
+    private val MAJOR = setOf("motorway", "trunk", "primary", "secondary")
+
+    /**
+     * Limit for a road with no maxspeed tag: the announced limit when it is a main
+     * road with a known name (so a side street that shares a name doesn't match),
+     * else the legal default for its zone or class.
+     */
+    fun estimateLimit(highway: String?, zone: String?, vararg names: String?): Int? {
+        if (highway?.removeSuffix("_link") in MAJOR) namedLimit(*names)?.let { return it }
+        return defaultLimit(highway, zone)
+    }
 
     /** Strips diacritics and folds alef/yeh/teh marbuta variants so OSM spellings match. */
     fun normalizeName(s: String): String = s.lowercase()
