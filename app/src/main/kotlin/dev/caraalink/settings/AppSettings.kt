@@ -207,6 +207,10 @@ object AppSettings {
     fun roadVoiceLanguage(context: Context): String =
         prefs(context).getString("road_voice_language", "ar") ?: "ar"
 
+    /** Outside temperature and city on the car screen. */
+    fun roadShowWeather(context: Context): Boolean =
+        prefs(context).getBoolean("road_show_weather", true)
+
     fun roadOverlay(context: Context): Boolean =
         prefs(context).getBoolean("road_overlay", true)
 

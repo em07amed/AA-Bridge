@@ -148,4 +148,6 @@
     <string name="road_voice_language_title">Alert voice language</string>
     <string name="road_voice_language_app">Same as the app</string>
     <string name="road_voice_arabic_missing">No Arabic voice on this phone: add it in Settings, Text-to-speech</string>
+    <string name="road_show_weather_title">Temperature and city</string>
+    <string name="road_show_weather_summary">Outside temperature (Open-Meteo) and the city you\'re in, on the car screen</string>
 </resources>

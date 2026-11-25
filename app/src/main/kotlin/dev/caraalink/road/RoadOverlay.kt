@@ -38,6 +38,8 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
     private val sign = label().apply { setTextColor(Color.BLACK) }
     private val speed = label()
     private val note = label()
+    /** "24°  المنصورة" -- outside temperature and city. */
+    private val place = label()
 
     private var unit = 0f
     private var last = RoadState()
@@ -51,6 +53,7 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
         column.gravity = horizontal
         row.addView(sign)
         row.addView(speed)
+        column.addView(place)
         column.addView(radar)
         column.addView(row)
         column.addView(note)
@@ -111,6 +114,12 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
         radar.setPadding(gap * 2, gap, gap * 2, gap)
         radar.layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
             .apply { bottomMargin = gap }
+
+        place.setTextSize(TypedValue.COMPLEX_UNIT_PX, u * 4.5f)
+        place.setPadding(gap * 2, gap, gap * 2, gap)
+        place.layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            .apply { bottomMargin = gap }
+        place.background = rounded(DARK)
 
         note.setTextSize(TypedValue.COMPLEX_UNIT_PX, u * 4.5f)
         note.setPadding(gap * 2, gap, gap * 2, gap)
@@ -174,11 +183,17 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
             radar.background = rounded(RED)
         }
 
+        val placeText = listOfNotNull(s.tempC?.let { "$it°" }, s.city).joinToString("  ")
+        place.visibility = if (placeText.isNotEmpty()) View.VISIBLE else View.GONE
+        place.text = placeText
+
         note.visibility = if (s.note != null) View.VISIBLE else View.GONE
         note.text = s.note ?: ""
 
         column.visibility =
-            if (row.visibility == View.VISIBLE || radar.visibility == View.VISIBLE || note.visibility == View.VISIBLE) View.VISIBLE
+            if (row.visibility == View.VISIBLE || radar.visibility == View.VISIBLE || note.visibility == View.VISIBLE ||
+                place.visibility == View.VISIBLE
+            ) View.VISIBLE
             else View.GONE
     }
 

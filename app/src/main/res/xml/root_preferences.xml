@@ -158,6 +158,11 @@
             android:summary="@string/road_report_parked_summary"
             android:defaultValue="true" />
         <SwitchPreferenceCompat
+            android:key="road_show_weather"
+            android:title="@string/road_show_weather_title"
+            android:summary="@string/road_show_weather_summary"
+            android:defaultValue="true" />
+        <SwitchPreferenceCompat
             android:key="road_overlay"
             android:title="@string/road_overlay_title"
             android:summary="@string/road_overlay_summary"

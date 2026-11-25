@@ -46,6 +46,9 @@ data class RoadState(
     val limitFromUser: Boolean = false,
     /** A road is matched (so a spoken limit can be saved for it). */
     val onRoad: Boolean = false,
+    /** Outside temperature (Open-Meteo) and the city the car is in (phone geocoder). */
+    val tempC: Int? = null,
+    val city: String? = null,
     val over: Boolean = false,
     /** Metres to the next camera on our line, when one is within 1 km. */
     val cameraM: Int? = null,
@@ -296,6 +299,7 @@ object RoadAlerts {
         if (loc.hasBearing() && loc.speed > 2f) heading = loc.bearing.toDouble()
 
         ensureTiles(at)
+        refreshPlace(at)
 
         matchRoad(at)
         val limit = currentLimit(ctx).limit
@@ -486,6 +490,55 @@ object RoadAlerts {
             .putString("my_cameras", mine.toString())
             .putString("hidden_cameras", JSONArray(hidden.toList()).toString())
             .apply()
+    }
+
+    // ---------- temperature and city ----------
+    //
+    // Every 10 minutes, or after 5 km: the current temperature from Open-Meteo
+    // (free, no key) and the city name from the phone's geocoder, in the alert
+    // language. Both off the network thread; failures just keep the last values.
+
+    private var tempC: Int? = null
+    private var city: String? = null
+    private var placeAt: LatLon? = null
+    private var placeTime = 0L
+    private var placeLoading = false
+
+    private fun refreshPlace(at: LatLon) {
+        val ctx = app ?: return
+        if (!AppSettings.roadShowWeather(ctx) || placeLoading) return
+        val now = System.currentTimeMillis()
+        val p = placeAt
+        if (p != null && now - placeTime < 10 * 60_000 && RoadMath.distanceM(p, at) < 5_000) return
+        val h = handler ?: return
+        placeLoading = true
+        placeAt = at
+        placeTime = now
+        val lang = voiceCtx?.resources?.configuration?.locales?.get(0) ?: ctx.resources.configuration.locales[0]
+        net.execute {
+            val t = runCatching {
+                val url = "https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f&current=temperature_2m"
+                    .format(Locale.US, at.lat, at.lon)
+                val c = URL(url).openConnection() as HttpURLConnection
+                c.connectTimeout = 10_000
+                c.readTimeout = 15_000
+                c.setRequestProperty("User-Agent", UA)
+                val body = c.inputStream.bufferedReader().use { it.readText() }
+                c.disconnect()
+                JSONObject(body).getJSONObject("current").getDouble("temperature_2m").roundToInt()
+            }.onFailure { logger?.log("weather failed: $it") }.getOrNull()
+            val name = runCatching {
+                @Suppress("DEPRECATION")
+                android.location.Geocoder(ctx, lang).getFromLocation(at.lat, at.lon, 1)
+                    ?.firstOrNull()?.let { it.locality ?: it.subAdminArea ?: it.adminArea }
+            }.onFailure { logger?.log("geocoder failed: $it") }.getOrNull()
+            h.post {
+                placeLoading = false
+                if (t != null) tempC = t
+                if (name != null) city = name
+                publish()
+            }
+        }
     }
 
     // ---------- OpenStreetMap tiles ----------
@@ -761,6 +814,8 @@ object RoadAlerts {
             limitEstimated = lim.estimated,
             limitFromUser = lim.fromUser,
             onRoad = road != null,
+            tempC = tempC.takeIf { AppSettings.roadShowWeather(ctx) },
+            city = city.takeIf { AppSettings.roadShowWeather(ctx) },
             over = kmh != null && limit != null && kmh > limit + AppSettings.roadTolerance(ctx),
             cameraM = cam?.meters?.roundToInt(),
             cameraLimit = cam?.camera?.limit ?: cam?.let { limit },

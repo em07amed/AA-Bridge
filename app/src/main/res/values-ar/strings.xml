@@ -143,4 +143,6 @@
     <string name="road_voice_language_title">لغة صوت التنبيه</string>
     <string name="road_voice_language_app">زي لغة الـ app</string>
     <string name="road_voice_arabic_missing">مفيش صوت عربي على الموبايل: نزّله من الإعدادات، Text-to-speech</string>
+    <string name="road_show_weather_title">الحرارة والمدينة</string>
+    <string name="road_show_weather_summary">درجة الحرارة برّه (Open-Meteo) والمدينة اللي انت فيها، على شاشة العربية</string>
 </resources>
