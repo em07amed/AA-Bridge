@@ -61,7 +61,7 @@ jobs:
         with:
           tag_name: alerts-build-${{ github.run_number }}
           name: AA Bridge with speed and radar alerts (build ${{ github.run_number }})
-          body: ${{ github.event.head_commit.message }}
+          body_path: RELEASE_NOTES.md
           target_commitish: ${{ github.sha }}
           files: AA-Bridge-alerts.apk
           make_latest: true

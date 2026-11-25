@@ -34,7 +34,7 @@ object UpdateChecker {
     private const val NOTIFICATION_ID = 4
 
     /** [apkUrl] is null if the release has no `.apk` asset attached (nothing to auto-download). */
-    private data class UpdateInfo(val title: String, val htmlUrl: String, val apkUrl: String?)
+    private data class UpdateInfo(val title: String, val htmlUrl: String, val apkUrl: String?, val notes: String = "")
 
     private fun logger(context: Context) = DiagnosticLogger(context, "update-checker")
 
@@ -71,7 +71,14 @@ object UpdateChecker {
         val json = JSONObject(body)
         val tag = json.getString("tag_name").removePrefix("v")
         if (!isNewer(tag, BuildConfig.VERSION_NAME)) return null
-        return UpdateInfo("New version available", json.getString("html_url"), apkAssetUrl(json))
+        // Release notes (markdown) shown in the prompt as plain text, kept short.
+        val notes = json.optString("body", "")
+            .replace(Regex("(?m)^#+\\s*"), "")
+            .replace("**", "")
+            .substringBefore("\n---")
+            .trim()
+            .take(1500)
+        return UpdateInfo("New version available", json.getString("html_url"), apkAssetUrl(json), notes)
     }
 
     /** "alerts-build-12" is newer than "alerts-build-9"; anything unparseable never prompts. */
@@ -127,7 +134,8 @@ object UpdateChecker {
         AlertDialog.Builder(activity)
             .setTitle(info.title)
             .setMessage(
-                if (info.apkUrl != null) "Download and install now?" else "No APK attached to this release -- opening its GitHub page instead.",
+                (if (info.notes.isNotBlank()) info.notes + "\n\n" else "") +
+                    if (info.apkUrl != null) "Download and install now?" else "No APK attached to this release -- opening its GitHub page instead.",
             )
             .setPositiveButton("Download") { _, _ ->
                 if (info.apkUrl != null) downloadAndInstall(context, info.apkUrl, info.title) else openPage(context, info.htmlUrl)
