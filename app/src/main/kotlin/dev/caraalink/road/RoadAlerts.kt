@@ -40,6 +40,10 @@ data class RoadState(
     val limitFromRoad: Boolean = false,
     /** Not signed on OpenStreetMap: the announced limit of this named road, or the legal default for its kind. */
     val limitEstimated: Boolean = false,
+    /** Set by the driver by voice for this road. */
+    val limitFromUser: Boolean = false,
+    /** A road is matched (so a spoken limit can be saved for it). */
+    val onRoad: Boolean = false,
     val over: Boolean = false,
     /** Metres to the next camera on our line, when one is within 1 km. */
     val cameraM: Int? = null,
@@ -120,6 +124,11 @@ object RoadAlerts {
     private var roadId: Long? = null
     private var roadLimit: Int? = null
     private var roadEstimate: Int? = null
+    private var road: Road? = null
+
+    /** Limits the driver set by voice: per OSM way, and for named roads along the same name nearby. */
+    private class UserLimit(val wayId: Long, val name: String?, val at: LatLon, val limit: Int)
+    private var userLimits = mutableListOf<UserLimit>()
     private var candidate: Long? = null
     private var roadSeen = 0L
 
@@ -203,6 +212,38 @@ object RoadAlerts {
             next = null
             showNote(R.string.road_note_camera_removed)
         }
+    }
+
+    /** From the voice prompt: [limit] for the road under the car, or null to forget the driver's limit there. */
+    fun setUserLimit(limit: Int?) {
+        handler?.post {
+            val r = road
+            val ctx = app ?: return@post
+            if (r == null) {
+                say(ctx.getString(R.string.road_voice_no_road))
+                showNote(R.string.road_voice_no_road)
+                return@post
+            }
+            userLimits.removeAll { it.wayId == r.id || (r.name != null && it.name == r.name && RoadMath.distanceM(it.at, r.pts.first()) < 30_000) }
+            if (limit != null) userLimits += UserLimit(r.id, r.name, last ?: r.pts.first(), limit)
+            saveFixes()
+            speeding = false
+            if (limit != null) {
+                say(ctx.getString(R.string.road_voice_saved, limit))
+                note = ctx.getString(R.string.road_voice_saved, limit)
+            } else {
+                say(ctx.getString(R.string.road_voice_cleared))
+                note = ctx.getString(R.string.road_voice_cleared)
+            }
+            noteUntil = System.currentTimeMillis() + 3_000
+            publish()
+            handler?.postDelayed({ publish() }, 3_100)
+        }
+    }
+
+    /** Shown while the voice prompt listens or when it didn't catch a number. */
+    fun showVoiceNote(@StringRes res: Int) {
+        handler?.post { showNote(res) }
     }
 
     fun toggleMute() {
@@ -292,13 +333,21 @@ object RoadAlerts {
 
     // ---------- limits ----------
 
-    private class Limit(val limit: Int?, val fromRoad: Boolean, val estimated: Boolean)
+    private class Limit(val limit: Int?, val fromRoad: Boolean, val estimated: Boolean, val fromUser: Boolean = false)
+
+    /** The driver's own limit for [r]: this way, or a way of the same name within 30 km of where it was set. */
+    private fun userLimitFor(r: Road): Int? {
+        userLimits.lastOrNull { it.wayId == r.id }?.let { return it.limit }
+        val n = r.name ?: return null
+        return userLimits.lastOrNull { it.name == n && RoadMath.distanceM(it.at, r.pts.first()) < 30_000 }?.limit
+    }
 
     /**
      * The road's signed limit, else the legal default for its kind of road,
      * else the driver's manual limit (null = off).
      */
     private fun currentLimit(ctx: Context): Limit {
+        road?.let { r -> userLimitFor(r)?.let { return Limit(it, fromRoad = false, estimated = false, fromUser = true) } }
         if (AppSettings.roadUseOsmLimit(ctx)) {
             roadLimit?.let { return Limit(it, fromRoad = true, estimated = false) }
             roadEstimate?.let { return Limit(it, fromRoad = false, estimated = true) }
@@ -320,11 +369,13 @@ object RoadAlerts {
             roadId = m.road.id
             roadLimit = m.limit
             roadEstimate = m.road.estimate
+            road = m.road
             roadSeen = now
         } else if (now - roadSeen > 15_000) {
             roadId = null
             roadLimit = null
             roadEstimate = null
+            road = null
         }
     }
 
@@ -397,6 +448,16 @@ object RoadAlerts {
             }.toMutableList()
             val h = JSONArray(p.getString("hidden_cameras", "[]"))
             hidden = (0 until h.length()).map { h.getLong(it) }.toMutableSet()
+            val u = JSONArray(p.getString("user_limits", "[]"))
+            userLimits = (0 until u.length()).map { i ->
+                val o = u.getJSONObject(i)
+                UserLimit(
+                    o.getLong("way"),
+                    if (o.has("name")) o.getString("name") else null,
+                    LatLon(o.getDouble("lat"), o.getDouble("lon")),
+                    o.getInt("limit"),
+                )
+            }.toMutableList()
         } catch (e: Exception) {
             logger?.log("fixes unreadable: $e")
         }
@@ -412,7 +473,14 @@ object RoadAlerts {
             c.heading?.let { o.put("heading", it) }
             mine.put(o)
         }
+        val u = JSONArray()
+        for (l in userLimits) {
+            val o = JSONObject().put("way", l.wayId).put("lat", l.at.lat).put("lon", l.at.lon).put("limit", l.limit)
+            l.name?.let { o.put("name", it) }
+            u.put(o)
+        }
         p.edit()
+            .putString("user_limits", u.toString())
             .putString("my_cameras", mine.toString())
             .putString("hidden_cameras", JSONArray(hidden.toList()).toString())
             .apply()
@@ -563,6 +631,7 @@ object RoadAlerts {
                         RoadMath.parseMaxspeed(tag("maxspeed:backward")) ?: all,
                         oneway,
                         RoadMath.estimateLimit(tag("highway"), zone, pts.first(), tag("name"), tag("name:ar"), tag("name:en"), tag("ref")),
+                        (tag("name") ?: tag("name:ar") ?: tag("name:en"))?.let { RoadMath.normalizeName(it) },
                     )
                 }
             }
@@ -664,6 +733,8 @@ object RoadAlerts {
             limit = limit,
             limitFromRoad = lim.fromRoad,
             limitEstimated = lim.estimated,
+            limitFromUser = lim.fromUser,
+            onRoad = road != null,
             over = kmh != null && limit != null && kmh > limit + AppSettings.roadTolerance(ctx),
             cameraM = cam?.meters?.roundToInt(),
             cameraLimit = cam?.camera?.limit ?: cam?.let { limit },

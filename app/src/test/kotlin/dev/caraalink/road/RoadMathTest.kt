@@ -175,4 +175,20 @@ class RoadMathTest {
         assertTrue(RoadMath.roadsQuery(box.s, box.w, box.n, box.e).contains("way(30.04000,31.23500,30.04500,31.24000)"))
         assertTrue(RoadMath.camerasQuery(1.0, 2.0, 3.0, 4.0).contains("speed_camera"))
     }
+
+    @Test
+    fun spokenLimits() {
+        assertEquals(60, RoadMath.parseSpokenLimit("ستين"))
+        assertEquals(80, RoadMath.parseSpokenLimit("الحد تمانين"))
+        assertEquals(80, RoadMath.parseSpokenLimit("ثمانين"))
+        assertEquals(100, RoadMath.parseSpokenLimit("مية"))
+        assertEquals(120, RoadMath.parseSpokenLimit("مية وعشرين"))
+        assertEquals(120, RoadMath.parseSpokenLimit("مائة و عشرين"))
+        assertEquals(90, RoadMath.parseSpokenLimit("90"))
+        assertEquals(60, RoadMath.parseSpokenLimit("٦٠"))
+        assertNull(RoadMath.parseSpokenLimit("مش عارف"))
+        assertNull(RoadMath.parseSpokenLimit("5"))
+        assertTrue(RoadMath.isClearCommand("امسح الحد"))
+        assertFalse(RoadMath.isClearCommand("ستين"))
+    }
 }

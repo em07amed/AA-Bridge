@@ -58,6 +58,8 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
 
         row.setOnClickListener { RoadAlerts.toggleMute() }
         row.setOnLongClickListener { RoadAlerts.addCameraHere(); true }
+        // Tap the sign and say the limit -- for roads with none, or a wrong one.
+        sign.setOnClickListener { VoiceLimit.listen(context) }
         radar.setOnClickListener { RoadAlerts.toggleMute() }
         radar.setOnLongClickListener { RoadAlerts.removeNextCamera(); true }
         render(last)
@@ -128,18 +130,21 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
         last = s
         val u = unit
 
-        // Limit sign: red ring = signed on this road (OpenStreetMap), orange = the legal
-        // default for this kind of road, grey = the driver's own fallback.
+        // Limit sign: blue ring = set by the driver by voice, red = signed on this road
+        // (OpenStreetMap), orange = announced/legal default, grey = manual fallback or "?".
+        // No limit known on a matched road: a "?" sign to tap and say it.
         val limit = s.limit
-        sign.visibility = if (limit != null && s.speedKmh != null) View.VISIBLE else View.GONE
-        if (limit != null) {
-            sign.text = limit.toString()
+        val ask = limit == null && s.onRoad
+        sign.visibility = if ((limit != null || ask) && s.speedKmh != null) View.VISIBLE else View.GONE
+        if (limit != null || ask) {
+            sign.text = limit?.toString() ?: "?"
             sign.background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
                 setColor(Color.WHITE)
                 setStroke(
                     (u * 1.8f).toInt().coerceAtLeast(2),
                     when {
+                        s.limitFromUser -> BLUE
                         s.limitFromRoad -> RED
                         s.limitEstimated -> ORANGE
                         else -> GREY
@@ -181,6 +186,7 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
         val RED = 0xFFE53935.toInt()
         val GREY = 0xFF9E9E9E.toInt()
         val ORANGE = 0xFFFB8C00.toInt()
+        val BLUE = 0xFF1E88E5.toInt()
         val DARK = 0xCC111111.toInt()
     }
 }

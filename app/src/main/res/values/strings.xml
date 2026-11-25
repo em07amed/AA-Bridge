@@ -118,7 +118,7 @@
     <string name="road_camera_alerts_summary">600 m before a camera. On the car screen, long-press your speed to save a camera, or the camera banner to remove a wrong one.</string>
     <string name="road_alert_sound_title">Alert sound</string>
     <string name="road_overlay_title">Show speed on the car screen</string>
-    <string name="road_overlay_summary">Speed, limit and the next camera, over Android Auto. Tap it to mute.</string>
+    <string name="road_overlay_summary">Speed, limit and the next camera, over Android Auto. Tap your speed to mute; tap the limit sign and say a limit to set it for that road.</string>
     <string name="road_overlay_corner_title">Position on the car screen</string>
     <string name="road_kmh">km/h</string>
     <string name="road_camera_banner">📷 %1$d m</string>
@@ -138,4 +138,10 @@
     <string name="road_corner_bottom_right">Bottom right</string>
     <string name="road_corner_bottom_left">Bottom left</string>
     <string name="road_kmh_value">%1$d km/h</string>
+    <string name="road_voice_prompt">Say the limit…</string>
+    <string name="road_voice_saved">Limit %1$d saved for this road</string>
+    <string name="road_voice_cleared">Your limit for this road was removed</string>
+    <string name="road_voice_not_understood">Didn\'t catch a number. Tap the sign and try again</string>
+    <string name="road_voice_unavailable">Voice input isn\'t available on this phone</string>
+    <string name="road_voice_no_road">No road found here yet</string>
 </resources>

@@ -113,7 +113,7 @@
     <string name="road_camera_alerts_summary">قبل الرادار بـ 600 متر. على شاشة العربية: دوس مطوّل على السرعة عشان تسجّل رادار، أو على شريط الرادار عشان تشيل رادار غلط.</string>
     <string name="road_alert_sound_title">صوت التنبيه</string>
     <string name="road_overlay_title">اعرض السرعة على شاشة العربية</string>
-    <string name="road_overlay_summary">السرعة والحد وأقرب رادار فوق Android Auto. دوس عليها عشان تكتم الصوت.</string>
+    <string name="road_overlay_summary">السرعة والحد وأقرب رادار فوق Android Auto. دوس على السرعة تكتم الصوت، ودوس على علامة الحد وقول رقم تحدد حد الطريق.</string>
     <string name="road_overlay_corner_title">مكانها على شاشة العربية</string>
     <string name="road_kmh">كم/س</string>
     <string name="road_camera_banner">📷 %1$d م</string>
@@ -133,4 +133,10 @@
     <string name="road_corner_bottom_right">تحت يمين</string>
     <string name="road_corner_bottom_left">تحت شمال</string>
     <string name="road_kmh_value">%1$d كم/س</string>
+    <string name="road_voice_prompt">قول الحد…</string>
+    <string name="road_voice_saved">الحد %1$d اتسجّل للطريق ده</string>
+    <string name="road_voice_cleared">اتشال الحد بتاعك للطريق ده</string>
+    <string name="road_voice_not_understood">مسمعتش رقم. دوس على العلامة وجرّب تاني</string>
+    <string name="road_voice_unavailable">الإدخال بالصوت مش متاح على الموبايل ده</string>
+    <string name="road_voice_no_road">لسه مفيش طريق متعرّف هنا</string>
 </resources>

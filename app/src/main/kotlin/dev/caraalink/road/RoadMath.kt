@@ -33,6 +33,8 @@ class Road(
     val oneway: Boolean,
     /** When no limit is tagged: the named road's announced limit or the legal default (see [RoadMath.namedLimit], [RoadMath.defaultLimit]). */
     val estimate: Int? = null,
+    /** Normalized name ([RoadMath.normalizeName]), so a limit the driver sets carries along the whole road. */
+    val name: String? = null,
 )
 
 data class RoadMatch(val road: Road, val forward: Boolean) {
@@ -204,6 +206,31 @@ object RoadMath {
             if (all.all { text.contains(it) } && not.none { text.contains(it) }) return n.limit
         }
         return null
+    }
+
+    private val TENS = mapOf(
+        "عشرين" to 20, "تلاتين" to 30, "ثلاثين" to 30, "اربعين" to 40, "خمسين" to 50, "ستين" to 60,
+        "سبعين" to 70, "تمانين" to 80, "ثمانين" to 80, "تسعين" to 90,
+    )
+    private val HUNDRED = listOf("ميه", "مايه", "مائه", "ميت")
+
+    /**
+     * A speed limit the driver said: "60", "٦٠", "ستين", "مية", "مية وعشرين",
+     * "الحد تمانين". Only 20..140 is accepted; anything else is null.
+     */
+    fun parseSpokenLimit(text: String): Int? {
+        val t = normalizeName(text).map { c -> if (c in '٠'..'٩') '0' + (c - '٠') else c }.joinToString("")
+        Regex("\\d{2,3}").findAll(t).map { it.value.toInt() }.firstOrNull { it in 20..140 }?.let { return it }
+        val hundred = HUNDRED.any { t.contains(it) }
+        val tens = TENS.entries.firstOrNull { t.contains(it.key) }?.value ?: 0
+        val v = (if (hundred) 100 else 0) + tens
+        return v.takeIf { it in 20..140 }
+    }
+
+    /** "امسح", "الغي", "clear": forget the driver's limit for this road. */
+    fun isClearCommand(text: String): Boolean {
+        val t = normalizeName(text)
+        return listOf("امسح", "الغي", "الغاء", "شيل", "clear", "delete", "remove").any { t.contains(it) }
     }
 
     private val cardinal = mapOf(

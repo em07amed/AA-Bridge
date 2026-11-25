@@ -32,6 +32,10 @@
     <!-- Package visibility (API 30+): needed to launch Android Auto for the
          one-click head-unit-server start. -->
     <queries>
+        <!-- Voice speed limits (dev.caraalink.road.VoiceLimit) -->
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
         <package android:name="com.google.android.projection.gearhead" />
     </queries>
 
