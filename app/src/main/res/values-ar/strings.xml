@@ -139,4 +139,7 @@
     <string name="road_voice_not_understood">مسمعتش رقم. دوس على العلامة وجرّب تاني</string>
     <string name="road_voice_unavailable">الإدخال بالصوت مش متاح على الموبايل ده</string>
     <string name="road_voice_no_road">لسه مفيش طريق متعرّف هنا</string>
+    <string name="road_voice_language_title">لغة صوت التنبيه</string>
+    <string name="road_voice_language_app">زي لغة الـ app</string>
+    <string name="road_voice_arabic_missing">مفيش صوت عربي على الموبايل: نزّله من الإعدادات، Text-to-speech</string>
 </resources>

@@ -144,4 +144,7 @@
     <string name="road_voice_not_understood">Didn\'t catch a number. Tap the sign and try again</string>
     <string name="road_voice_unavailable">Voice input isn\'t available on this phone</string>
     <string name="road_voice_no_road">No road found here yet</string>
+    <string name="road_voice_language_title">Alert voice language</string>
+    <string name="road_voice_language_app">Same as the app</string>
+    <string name="road_voice_arabic_missing">No Arabic voice on this phone: add it in Settings, Text-to-speech</string>
 </resources>

@@ -3,6 +3,7 @@ package dev.caraalink.road
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
@@ -27,6 +28,7 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+import java.util.Locale
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.Executors
 import kotlin.math.roundToInt
@@ -220,7 +222,7 @@ object RoadAlerts {
             val r = road
             val ctx = app ?: return@post
             if (r == null) {
-                say(ctx.getString(R.string.road_voice_no_road))
+                say(vs(R.string.road_voice_no_road))
                 showNote(R.string.road_voice_no_road)
                 return@post
             }
@@ -229,10 +231,10 @@ object RoadAlerts {
             saveFixes()
             speeding = false
             if (limit != null) {
-                say(ctx.getString(R.string.road_voice_saved, limit))
+                say(vs(R.string.road_voice_saved, limit))
                 note = ctx.getString(R.string.road_voice_saved, limit)
             } else {
-                say(ctx.getString(R.string.road_voice_cleared))
+                say(vs(R.string.road_voice_cleared))
                 note = ctx.getString(R.string.road_voice_cleared)
             }
             noteUntil = System.currentTimeMillis() + 3_000
@@ -391,7 +393,7 @@ object RoadAlerts {
             if (!speeding) {
                 speeding = true
                 lastNag = now + 3_000 // let the sentence finish
-                say(ctx.getString(R.string.road_say_speeding, kmh.roundToInt(), limit))
+                say(vs(R.string.road_say_speeding, kmh.roundToInt(), limit))
             } else if (now - lastNag >= 8_000) {
                 lastNag = now
                 beep()
@@ -419,12 +421,12 @@ object RoadAlerts {
             c.farSaid = true
             val m = (hit.meters / 50).roundToInt() * 50
             say(
-                if (camLimit != null) ctx.getString(R.string.road_say_camera_far, m, camLimit)
-                else ctx.getString(R.string.road_say_camera_far_nolimit, m),
+                if (camLimit != null) vs(R.string.road_say_camera_far, m, camLimit)
+                else vs(R.string.road_say_camera_far_nolimit, m),
             )
         } else if (!c.nearSaid && hit.meters <= 200 && camLimit != null && kmh > camLimit) {
             c.nearSaid = true
-            say(ctx.getString(R.string.road_say_camera_near, camLimit))
+            say(vs(R.string.road_say_camera_near, camLimit))
         }
     }
 
@@ -648,10 +650,28 @@ object RoadAlerts {
             logger?.log("TTS init failed ($status) -- beeps only")
             return
         }
-        // Speak in the app's language; the sentences come from its strings.
-        val lang = ctx.resources.configuration.locales[0]
-        val r = t.setLanguage(lang)
-        ttsReady = r != TextToSpeech.LANG_MISSING_DATA && r != TextToSpeech.LANG_NOT_SUPPORTED
+        // Speak in the alert language (Arabic by default, whatever the phone's language),
+        // with the sentences from that language's strings. No Arabic voice installed:
+        // English, and a note saying how to add the Arabic one.
+        fun ok(r: Int) = r != TextToSpeech.LANG_MISSING_DATA && r != TextToSpeech.LANG_NOT_SUPPORTED
+        var lang = when (AppSettings.roadVoiceLanguage(ctx)) {
+            "en" -> Locale.ENGLISH
+            "app" -> ctx.resources.configuration.locales[0]
+            else -> Locale("ar", "EG")
+        }
+        var good = ok(t.setLanguage(lang))
+        if (!good && lang.language == "ar") {
+            lang = Locale("ar")
+            good = ok(t.setLanguage(lang))
+            if (!good) {
+                logger?.log("TTS has no Arabic voice -- falling back to English")
+                showNote(R.string.road_voice_arabic_missing)
+                lang = Locale.ENGLISH
+                good = ok(t.setLanguage(lang))
+            }
+        }
+        ttsReady = good
+        voiceCtx = ctx.createConfigurationContext(Configuration(ctx.resources.configuration).apply { setLocale(lang) })
         if (!ttsReady) logger?.log("TTS has no voice for $lang -- beeps only")
         t.setAudioAttributes(navAudio)
         t.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
@@ -661,6 +681,12 @@ object RoadAlerts {
             override fun onError(utteranceId: String?) = releaseFocus()
         })
     }
+
+    /** Strings in the alert language (see [onTtsInit]). */
+    private var voiceCtx: Context? = null
+
+    private fun vs(@StringRes res: Int, vararg args: Any): String =
+        (voiceCtx ?: app)?.getString(res, *args) ?: ""
 
     private val navAudio: AudioAttributes = AudioAttributes.Builder()
         .setUsage(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)

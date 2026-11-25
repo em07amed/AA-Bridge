@@ -203,6 +203,10 @@ object AppSettings {
     fun roadReportParked(context: Context): Boolean =
         prefs(context).getBoolean("road_report_parked", true)
 
+    /** Language of spoken alerts: "ar" (default), "en", or "app" (the app's language). */
+    fun roadVoiceLanguage(context: Context): String =
+        prefs(context).getString("road_voice_language", "ar") ?: "ar"
+
     fun roadOverlay(context: Context): Boolean =
         prefs(context).getBoolean("road_overlay", true)
 
