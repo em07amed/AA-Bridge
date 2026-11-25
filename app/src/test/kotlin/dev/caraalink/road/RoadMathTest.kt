@@ -165,4 +165,14 @@ class RoadMathTest {
         assertEquals(60, RoadMath.estimateLimit("secondary", null, LatLon(30.05, 31.24), "شارع الجمهورية"))
         assertEquals(90, RoadMath.namedLimit("الطريق الدائري")) // Cairo ring road unchanged
     }
+
+    @Test
+    fun tiles() {
+        val (row, col) = RoadMath.tileOf(cairo, RoadMath.ROAD_TILE)
+        val box = RoadMath.tileBox(row, col, RoadMath.ROAD_TILE)
+        assertTrue(cairo.lat >= box.s && cairo.lat < box.n && cairo.lon >= box.w && cairo.lon < box.e)
+        assertEquals(555.0, RoadMath.distanceM(LatLon(box.s, box.w), LatLon(box.n, box.w)), 5.0)
+        assertTrue(RoadMath.roadsQuery(box.s, box.w, box.n, box.e).contains("way(30.04000,31.23500,30.04500,31.24000)"))
+        assertTrue(RoadMath.camerasQuery(1.0, 2.0, 3.0, 4.0).contains("speed_camera"))
+    }
 }

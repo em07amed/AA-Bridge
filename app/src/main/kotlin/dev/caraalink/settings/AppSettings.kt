@@ -184,9 +184,9 @@ object AppSettings {
     fun roadUseOsmLimit(context: Context): Boolean =
         prefs(context).getBoolean("road_use_osm_limit", true)
 
-    /** Limit used when the road's is unknown; null = no warning there. */
+    /** Limit used when no road is known (off by default: a wrong number is worse than none); null = off. */
     fun roadManualLimit(context: Context): Int? =
-        prefs(context).getString("road_manual_limit", "100")?.toIntOrNull()?.takeIf { it > 0 }
+        prefs(context).getString("road_manual_limit", "0")?.toIntOrNull()?.takeIf { it > 0 }
 
     /** km/h over the limit before warning (GPS speed reads a little under the dashboard). */
     fun roadTolerance(context: Context): Int =

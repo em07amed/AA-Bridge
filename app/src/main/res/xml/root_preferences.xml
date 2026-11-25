@@ -124,7 +124,7 @@
             android:title="@string/road_manual_limit_title"
             android:entries="@array/road_manual_limit_entries"
             android:entryValues="@array/road_manual_limit_values"
-            android:defaultValue="100"
+            android:defaultValue="0"
             app:useSimpleSummaryProvider="true" />
         <ListPreference
             android:key="road_tolerance"

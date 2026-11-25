@@ -49,13 +49,29 @@ data class CameraAhead(val camera: SpeedCamera, val meters: Double)
 object RoadMath {
     private const val EARTH_M = 6_371_000.0
 
-    /** Drivable roads within 1 km and cameras within 4 km, with geometry. */
-    fun overpassQuery(at: LatLon): String =
-        "[out:json][timeout:25];(" +
-            "way(around:1000,${at.lat},${at.lon})[\"highway\"~\"^(motorway|trunk|primary|secondary|tertiary|" +
-            "unclassified|residential|living_street|service)(_link)?$\"];" +
-            "node(around:4000,${at.lat},${at.lon})[\"highway\"=\"speed_camera\"];" +
-            ");out geom tags;"
+    /** Road tiles are ~550 m, camera tiles ~5.5 km (fetched 3x3 at a time). */
+    const val ROAD_TILE = 0.005
+    const val CAMERA_TILE = 0.05
+
+    data class Box(val s: Double, val w: Double, val n: Double, val e: Double)
+
+    /** (row, column) of the tile holding [at]. */
+    fun tileOf(at: LatLon, size: Double): Pair<Int, Int> =
+        Math.floor(at.lat / size).toInt() to Math.floor(at.lon / size).toInt()
+
+    fun tileBox(row: Int, col: Int, size: Double): Box =
+        Box(row * size, col * size, (row + 1) * size, (col + 1) * size)
+
+    private fun bbox(s: Double, w: Double, n: Double, e: Double) =
+        "%.5f,%.5f,%.5f,%.5f".format(java.util.Locale.US, s, w, n, e)
+
+    /** Drivable roads in a box with geometry (no service roads: parking aisles and driveways). */
+    fun roadsQuery(s: Double, w: Double, n: Double, e: Double): String =
+        "[out:json][timeout:25];way(${bbox(s, w, n, e)})[\"highway\"~\"^(motorway|trunk|primary|secondary|tertiary|" +
+            "unclassified|residential|living_street)(_link)?$\"];out tags geom;"
+
+    fun camerasQuery(s: Double, w: Double, n: Double, e: Double): String =
+        "[out:json][timeout:25];node(${bbox(s, w, n, e)})[\"highway\"=\"speed_camera\"];out;"
 
     /** "60", "60 km/h", "40 mph" → km/h; anything without a number ("EG:urban", "none") → null. */
     fun parseMaxspeed(v: String?): Int? {

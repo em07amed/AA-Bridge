@@ -22,6 +22,7 @@ import dev.caraalink.diagnostics.DiagnosticLogger
 import dev.caraalink.settings.AppSettings
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
@@ -73,7 +74,7 @@ object RoadAlerts {
         private set
 
     /**
-     * true = parked (GPS speed under 3 km/h for 5 s), false = moving (over 8 km/h),
+     * true = parked (GPS speed under 3 km/h for 30 s), false = moving (over 8 km/h),
      * null = not known yet. Read by the Android Auto session to report the parking
      * brake / gear, so Android Auto can allow parked-only features. A lost fix keeps
      * the last state, so a tunnel never turns into "parked".
@@ -110,10 +111,6 @@ object RoadAlerts {
     private var myCams = mutableListOf<SpeedCamera>()
     private var hidden = mutableSetOf<Long>()
     private var cameras: List<SpeedCamera> = emptyList()
-    private var fetchedAt: LatLon? = null
-    private var fetchedTime = 0L
-    private var lastAttempt = 0L
-    private var fetching = false
 
     private var last: LatLon? = null
     private var lastFixAt = 0L
@@ -147,6 +144,8 @@ object RoadAlerts {
         val h = Handler(t.looper)
         handler = h
         h.post {
+            pending.clear() // a load cut off by the last stop() never cleared its key
+            retryAt.clear()
             loadFixes()
             startGps()
             tick()
@@ -253,9 +252,7 @@ object RoadAlerts {
         updateParked(speedKmh)
         if (loc.hasBearing() && loc.speed > 2f) heading = loc.bearing.toDouble()
 
-        val f = fetchedAt
-        val now = System.currentTimeMillis()
-        if (f == null || RoadMath.distanceM(f, at) > 600 || now - fetchedTime > 15 * 60_000) fetch(at)
+        ensureTiles(at)
 
         matchRoad(at)
         val limit = currentLimit(ctx).limit
@@ -269,7 +266,7 @@ object RoadAlerts {
         val now = System.currentTimeMillis()
         if (kmh < 3) {
             if (stillSince == 0L) stillSince = now
-            if (now - stillSince >= 5_000 && parked != true) {
+            if (now - stillSince >= 30_000 && parked != true) {
                 parked = true
                 logger?.log("parked")
             }
@@ -421,50 +418,112 @@ object RoadAlerts {
             .apply()
     }
 
-    // ---------- OpenStreetMap ----------
+    // ---------- OpenStreetMap tiles ----------
+    //
+    // Roads come in ~550 m tiles (3x3 around the car), cameras in one ~16 km
+    // square around the car. Each answer is cached on disk, so a road driven
+    // before works offline and Overpass sees few, small requests. One 1 km query
+    // in central Cairo was big enough to time out, which left no road matched
+    // and the limit falling back to the manual one.
 
-    private fun fetch(at: LatLon) {
+    private class Tile(val key: String, val query: String, val maxAgeMs: Long, val roads: Boolean)
+
+    private val roadTiles = LinkedHashMap<String, List<Road>>(32, 0.75f, true)
+    private val camAreas = LinkedHashMap<String, List<SpeedCamera>>(8, 0.75f, true)
+    private val pending = mutableSetOf<String>()
+    private val retryAt = mutableMapOf<String, Long>()
+    @Volatile private var busyUntil = 0L
+
+    private fun wantedTiles(at: LatLon): List<Tile> {
+        val out = ArrayList<Tile>()
+        val (ry, rx) = RoadMath.tileOf(at, RoadMath.ROAD_TILE)
+        // The car's own tile first, then its neighbours.
+        val order = listOf(0 to 0, -1 to 0, 1 to 0, 0 to -1, 0 to 1, -1 to -1, -1 to 1, 1 to -1, 1 to 1)
+        for ((dy, dx) in order) {
+            val (s, w, n, e) = RoadMath.tileBox(ry + dy, rx + dx, RoadMath.ROAD_TILE)
+            out += Tile("r_${ry + dy}_${rx + dx}", RoadMath.roadsQuery(s, w, n, e), 14L * 24 * 3600_000, roads = true)
+        }
+        val (cy, cx) = RoadMath.tileOf(at, RoadMath.CAMERA_TILE)
+        val (s, w) = RoadMath.tileBox(cy - 1, cx - 1, RoadMath.CAMERA_TILE)
+        val (_, _, n, e) = RoadMath.tileBox(cy + 1, cx + 1, RoadMath.CAMERA_TILE)
+        out += Tile("c_${cy}_$cx", RoadMath.camerasQuery(s, w, n, e), 7L * 24 * 3600_000, roads = false)
+        return out
+    }
+
+    private fun ensureTiles(at: LatLon) {
         val now = System.currentTimeMillis()
-        if (fetching || now - lastAttempt < 20_000) return
-        val h = handler ?: return
-        fetching = true
-        lastAttempt = now
-        net.execute {
-            val result = runCatching { download(RoadMath.overpassQuery(at)) }
-            h.post {
-                fetching = false
-                result.onSuccess { (r, c) ->
-                    roads = r
-                    osmCams = c
-                    mergeCams()
-                    fetchedAt = at
-                    fetchedTime = System.currentTimeMillis()
-                    logger?.log("OSM: ${r.size} roads, ${c.size} cameras")
-                }.onFailure {
-                    // Offline or Overpass busy: keep the last data and retry in a minute.
-                    logger?.log("OSM fetch failed: $it")
-                    fetchedTime = System.currentTimeMillis() - 14 * 60_000
-                }
-            }
+        for (t in wantedTiles(at)) {
+            val have = if (t.roads) roadTiles.containsKey(t.key) else camAreas.containsKey(t.key)
+            if (have || t.key in pending || now < (retryAt[t.key] ?: 0L)) continue
+            pending += t.key
+            net.execute { loadTile(t) }
         }
     }
 
-    private fun download(query: String): Pair<List<Road>, List<SpeedCamera>> {
+    /** Network thread: disk cache, else Overpass (then cached). */
+    private fun loadTile(t: Tile) {
+        val file = app?.let { File(File(it.cacheDir, "road-tiles"), "${t.key}.json") }
+        var body: String? = null
+        var fromCache = false
+        if (file != null && file.exists() && System.currentTimeMillis() - file.lastModified() < t.maxAgeMs) {
+            body = runCatching { file.readText() }.getOrNull()
+            fromCache = body != null
+        }
+        var error: Exception? = null
+        if (body == null) {
+            val wait = busyUntil - System.currentTimeMillis()
+            if (wait > 0) runCatching { Thread.sleep(wait) }
+            try {
+                val got = download(t.query)
+                body = got
+                if (file != null) runCatching { file.parentFile?.mkdirs(); file.writeText(got) }
+            } catch (e: Exception) {
+                error = e
+            }
+        }
+        val parsed = body?.let { runCatching { parse(it) }.getOrNull() }
+        handler?.post {
+            pending -= t.key
+            if (parsed == null) {
+                retryAt[t.key] = System.currentTimeMillis() + 30_000
+                logger?.log("tile ${t.key} failed: ${error ?: "unreadable"}")
+                return@post
+            }
+            retryAt -= t.key
+            if (t.roads) {
+                roadTiles[t.key] = parsed.first
+                while (roadTiles.size > 30) roadTiles.remove(roadTiles.keys.first())
+            } else {
+                camAreas[t.key] = parsed.second
+                while (camAreas.size > 4) camAreas.remove(camAreas.keys.first())
+            }
+            roads = roadTiles.values.flatten().distinctBy { it.id }
+            osmCams = camAreas.values.flatten().distinctBy { it.id }
+            mergeCams()
+            logger?.log("tile ${t.key}${if (fromCache) " (cache)" else ""}: ${parsed.first.size} roads, ${parsed.second.size} cameras")
+        }
+    }
+
+    private fun download(query: String): String {
         var error: Exception? = null
         for (endpoint in ENDPOINTS) {
             try {
                 val c = URL(endpoint).openConnection() as HttpURLConnection
                 c.connectTimeout = 15_000
-                c.readTimeout = 30_000
+                c.readTimeout = 45_000
                 c.requestMethod = "POST"
                 c.doOutput = true
                 c.setRequestProperty("User-Agent", UA)
                 c.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
                 c.outputStream.use { it.write(("data=" + URLEncoder.encode(query, "UTF-8")).toByteArray()) }
-                if (c.responseCode != 200) throw IOException("HTTP ${c.responseCode} from $endpoint")
+                val code = c.responseCode
+                if (code == 429 || code == 504) busyUntil = System.currentTimeMillis() + 60_000
+                if (code != 200) throw IOException("HTTP $code from $endpoint")
                 val body = c.inputStream.bufferedReader().use { it.readText() }
                 c.disconnect()
-                return parse(body)
+                // Overpass reports a timeout as HTTP 200 with partial data and a remark.
+                if (body.contains("\"remark\"") && body.contains("runtime error")) throw IOException("Overpass timeout at $endpoint")
+                return body
             } catch (e: Exception) {
                 error = e
             }
