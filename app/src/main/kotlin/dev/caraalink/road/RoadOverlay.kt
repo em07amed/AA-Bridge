@@ -43,7 +43,9 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
 
     private var unit = 0f
     private var last = RoadState()
-    private val listener: (RoadState) -> Unit = { s -> post { render(s) } }
+    // Redraw only when something changed: the state is republished every couple of
+    // seconds, and this view tree is re-encoded to the car on every frame.
+    private val listener: (RoadState) -> Unit = { s -> post { if (s != last) render(s) } }
 
     init {
         val corner = AppSettings.roadOverlayCorner(context)

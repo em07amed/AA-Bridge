@@ -165,6 +165,7 @@ object RoadAlerts {
             tick()
         }
         tts = TextToSpeech(ctx) { status -> h.post { onTtsInit(status) } }
+        net.execute { pruneTileCache(ctx) }
         logger?.log("started")
     }
 
@@ -556,6 +557,19 @@ object RoadAlerts {
     private val pending = mutableSetOf<String>()
     private val retryAt = mutableMapOf<String, Long>()
     @Volatile private var busyUntil = 0L
+
+    /** Drops cached tiles older than 30 days, then the oldest until the cache is under 50 MB. */
+    private fun pruneTileCache(ctx: Context) {
+        val files = File(ctx.cacheDir, "road-tiles").listFiles()?.toMutableList() ?: return
+        val cutoff = System.currentTimeMillis() - 30L * 24 * 3600_000
+        files.filter { it.lastModified() < cutoff }.forEach { it.delete(); files.remove(it) }
+        var total = files.sumOf { it.length() }
+        for (f in files.sortedBy { it.lastModified() }) {
+            if (total <= 50L * 1024 * 1024) break
+            total -= f.length()
+            f.delete()
+        }
+    }
 
     private fun wantedTiles(at: LatLon): List<Tile> {
         val out = ArrayList<Tile>()
