@@ -71,7 +71,7 @@ object UpdateChecker {
         val json = JSONObject(body)
         val tag = json.getString("tag_name").removePrefix("v")
         if (!isNewer(tag, BuildConfig.VERSION_NAME)) return null
-        return UpdateInfo("Update available: v$tag", json.getString("html_url"), apkAssetUrl(json))
+        return UpdateInfo("New version available", json.getString("html_url"), apkAssetUrl(json))
     }
 
     /** "alerts-build-12" is newer than "alerts-build-9"; anything unparseable never prompts. */
