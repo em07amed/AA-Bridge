@@ -1,33 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Single-colour version for Android 13+ themed icons.
+     Drawn for this app; scaled into the adaptive-icon safe zone (66dp circle). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Single-colour version for Android 13+ themed icons. Scaled into the adaptive-icon safe zone (66dp circle). -->
-    <group
-        android:pivotX="54"
-        android:pivotY="54"
-        android:scaleX="0.7"
-        android:scaleY="0.7">
-        <path
-            android:pathData="M34,82 L34,66 Q34,44 58,40 L66,39"
-            android:strokeColor="#FFFFFFFF"
-            android:strokeWidth="10"
-            android:strokeLineCap="round"
-            android:strokeLineJoin="round" />
-        <path
-            android:pathData="M60,26 L78,39 L60,52 Z"
-            android:fillColor="#FFFFFFFF"
-            android:strokeColor="#FFFFFFFF"
-            android:strokeWidth="4"
-            android:strokeLineJoin="round" />
-        <path
-            android:pathData="M59,74 a15,15 0 1,0 30,0 a15,15 0 1,0 -30,0"
-            android:strokeColor="#FFFFFFFF"
-            android:strokeWidth="5" />
-        <path
-            android:pathData="M68.73 74.07Q67.97 74.07 67.58 74.62Q67.2 75.17 67.2 76.27Q67.2 77.37 67.58 77.92Q67.97 78.47 68.73 78.47Q69.5 78.47 69.88 77.92Q70.27 77.37 70.27 76.27Q70.27 75.17 69.88 74.62Q69.5 74.07 68.73 74.07ZM72.32 68.05V70.37Q71.61 69.99 70.97 69.81Q70.34 69.63 69.74 69.63Q68.44 69.63 67.71 70.43Q66.98 71.23 66.87 72.81Q67.36 72.4 67.94 72.2Q68.53 71.99 69.21 71.99Q70.95 71.99 72.01 73.11Q73.07 74.24 73.07 76.06Q73.07 78.07 71.88 79.29Q70.69 80.5 68.7 80.5Q66.5 80.5 65.29 78.85Q64.09 77.2 64.09 74.17Q64.09 71.07 65.5 69.29Q66.91 67.52 69.36 67.52Q70.14 67.52 70.87 67.65Q71.61 67.79 72.32 68.05ZM81.01 73.98Q81.01 71.63 80.61 70.67Q80.21 69.71 79.28 69.71Q78.34 69.71 77.94 70.67Q77.54 71.63 77.54 73.98Q77.54 76.35 77.94 77.33Q78.34 78.3 79.28 78.3Q80.2 78.3 80.6 77.33Q81.01 76.35 81.01 73.98ZM83.91 74Q83.91 77.12 82.7 78.81Q81.49 80.5 79.28 80.5Q77.05 80.5 75.84 78.81Q74.63 77.12 74.63 74Q74.63 70.88 75.84 69.19Q77.05 67.5 79.28 67.5Q81.49 67.5 82.7 69.19Q83.91 70.88 83.91 74Z"
-            android:fillColor="#FFFFFFFF" />
+    <group android:pivotX="54" android:pivotY="55" android:scaleX="0.66" android:scaleY="0.66" android:translateY="-1">
+        <group android:pivotX="54" android:pivotY="56" android:scaleX="0.82" android:scaleY="0.82" android:translateY="-10">
+            <path android:pathData="M54,22 A32,32 0 0,1 75.5,30.3" android:strokeColor="#FFFFFFFF" android:strokeWidth="4" android:strokeLineCap="round" android:strokeLineJoin="round" />
+            <path android:pathData="M75.5,30.3 A32,32 0 0,1 81.7,39" android:strokeColor="#FFFFFFFF" android:strokeWidth="4" android:strokeLineCap="round" android:strokeLineJoin="round" />
+            <path android:pathData="M30,58 a24,24 0 1,0 48,0 a24,24 0 1,0 -48,0" android:strokeColor="#FFFFFFFF" android:strokeWidth="7" />
+            <path android:pathData="M30.5,60 L47,60 M61,60 L77.5,60 M54,66 L54,81" android:strokeColor="#FFFFFFFF" android:strokeWidth="6" android:strokeLineCap="round" android:strokeLineJoin="round" />
+            <path android:pathData="M46,60 a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0" android:fillColor="#FFFFFFFF" />
+            <group android:rotation="-38" android:pivotX="33" android:pivotY="48">
+                <path android:pathData="M32,40 h2 a6,6 0 0 1 6,6 v5 a6,6 0 0 1 -6,6 h-2 a6,6 0 0 1 -6,-6 v-5 a6,6 0 0 1 6,-6 z" android:fillColor="#FFFFFFFF" />
+            </group>
+            <group android:rotation="38" android:pivotX="75" android:pivotY="48">
+                <path android:pathData="M74,40 h2 a6,6 0 0 1 6,6 v5 a6,6 0 0 1 -6,6 h-2 a6,6 0 0 1 -6,-6 v-5 a6,6 0 0 1 6,-6 z" android:fillColor="#FFFFFFFF" />
+            </group>
+        </group>
+            <path android:pathData="M37.2 92.41H33.67L33.12 94H30.85L34.09 85.25H36.78L40.02 94H37.75ZM34.24 90.78H36.63L35.44 87.3ZM44.18 85.25H46.44V90.5Q46.44 91.58 46.79 92.05Q47.14 92.51 47.95 92.51Q48.76 92.51 49.11 92.05Q49.46 91.58 49.46 90.5V85.25H51.72V90.5Q51.72 92.35 50.79 93.26Q49.86 94.17 47.95 94.17Q46.04 94.17 45.11 93.26Q44.18 92.35 44.18 90.5ZM55.88 85.25H63.94V86.96H61.04V94H58.79V86.96H55.88ZM72.11 86.73Q71.07 86.73 70.51 87.49Q69.94 88.25 69.94 89.63Q69.94 91.01 70.51 91.77Q71.07 92.54 72.11 92.54Q73.14 92.54 73.71 91.77Q74.28 91.01 74.28 89.63Q74.28 88.25 73.71 87.49Q73.14 86.73 72.11 86.73ZM72.11 85.09Q74.21 85.09 75.41 86.3Q76.61 87.51 76.61 89.63Q76.61 91.76 75.41 92.96Q74.21 94.17 72.11 94.17Q70 94.17 68.8 92.96Q67.61 91.76 67.61 89.63Q67.61 87.51 68.8 86.3Q70 85.09 72.11 85.09Z" android:fillColor="#FFFFFFFF" />
     </group>
 </vector>
