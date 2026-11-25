@@ -30,3 +30,6 @@ usbmon-*.log
 
 # raw device logcat dumps (contain car/device IDs)
 cl*.txt
+
+# Drive Bridge release key (CI writes it from secrets)
+*.jks

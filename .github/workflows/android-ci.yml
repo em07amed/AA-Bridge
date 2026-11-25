@@ -45,6 +45,25 @@ jobs:
       - name: Build debug APK
         run: ./gradlew assembleDebug --no-daemon
 
+      # Releases are signed with the private key kept in the repo's Actions
+      # secrets (never committed). Without it the release step fails rather
+      # than publishing an APK signed with the public debug key.
+      - name: Release signing key
+        if: github.event_name == 'push' && github.ref == 'refs/heads/speed-radar-alerts'
+        env:
+          KEYSTORE_B64: ${{ secrets.RELEASE_KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ] || [ -z "$KEYSTORE_PASSWORD" ]; then
+            echo "::error::RELEASE_KEYSTORE_B64 / RELEASE_KEYSTORE_PASSWORD secrets are missing"; exit 1
+          fi
+          echo "$KEYSTORE_B64" | base64 -d > app/release.jks
+          printf 'storeFile=release.jks\nstorePassword=%s\nkeyAlias=drivebridge\nkeyPassword=%s\n' "$KEYSTORE_PASSWORD" "$KEYSTORE_PASSWORD" > keystore.properties
+
+      - name: Build release APK
+        if: github.event_name == 'push' && github.ref == 'refs/heads/speed-radar-alerts'
+        run: ./gradlew assembleRelease --no-daemon
+
       - name: Upload debug APK
         uses: actions/upload-artifact@v7
         with:
@@ -53,14 +72,17 @@ jobs:
           retention-days: 14
 
       - name: Name the APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk AA-Bridge-alerts.apk
+        if: github.event_name == 'push' && github.ref == 'refs/heads/speed-radar-alerts'
+        run: |
+          cp app/build/outputs/apk/release/app-release.apk AA-Bridge-alerts.apk
+          rm -f app/release.jks keystore.properties
 
       - name: Publish the APK as a release
         if: github.event_name == 'push' && github.ref == 'refs/heads/speed-radar-alerts'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: alerts-build-${{ github.run_number }}
-          name: AA Bridge with speed and radar alerts (build ${{ github.run_number }})
+          name: Drive Bridge build ${{ github.run_number }}
           body_path: RELEASE_NOTES.md
           target_commitish: ${{ github.sha }}
           files: AA-Bridge-alerts.apk
