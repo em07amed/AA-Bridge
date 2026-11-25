@@ -54,8 +54,14 @@ jobs:
           if [ -z "$KEYSTORE_B64" ] || [ -z "$KEYSTORE_PASSWORD" ]; then
             echo "::error::RELEASE_KEYSTORE_B64 / RELEASE_KEYSTORE_PASSWORD secrets are missing"; exit 1
           fi
-          echo "$KEYSTORE_B64" | base64 -d > app/release.jks
-          printf 'storeFile=release.jks\nstorePassword=%s\nkeyAlias=drivebridge\nkeyPassword=%s\n' "$KEYSTORE_PASSWORD" "$KEYSTORE_PASSWORD" > keystore.properties
+          # Pasting on a phone can add spaces or line breaks; the key is 5744 characters.
+          CLEAN=$(printf '%s' "$KEYSTORE_B64" | tr -d ' \r\n\t')
+          PASS=$(printf '%s' "$KEYSTORE_PASSWORD" | tr -d ' \r\n\t')
+          echo "keystore secret: ${#CLEAN} characters (expected 5744)"
+          printf '%s' "$CLEAN" | base64 -d > app/release.jks
+          keytool -list -keystore app/release.jks -storepass "$PASS" -alias drivebridge > /dev/null \
+            || { echo "::error::the keystore or its password from the secrets is wrong"; exit 1; }
+          printf 'storeFile=release.jks\nstorePassword=%s\nkeyAlias=drivebridge\nkeyPassword=%s\n' "$PASS" "$PASS" > keystore.properties
 
       - name: Build release APK
         if: github.event_name == 'push' && github.ref == 'refs/heads/speed-radar-alerts'
