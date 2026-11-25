@@ -163,12 +163,17 @@ fun DashLink(text: String, onClick: () -> Unit) {
     )
 }
 
+/** "Build 9" from the version name "alerts-build-9" (the full name stays in logs and About). */
+@Composable
+fun buildLabel(): String =
+    stringResource(R.string.build_label, dev.caraalink.BuildConfig.VERSION_NAME.substringAfterLast('-'))
+
 /** The author's name, under the wordmark and at the foot of Settings. */
 @Composable
 fun Byline(modifier: Modifier = Modifier) {
     // The build in every screenshot a user sends.
     Text(
-        "${stringResource(R.string.made_by)} · v${dev.caraalink.BuildConfig.VERSION_NAME} (${dev.caraalink.BuildConfig.GIT_SHA})",
+        "${stringResource(R.string.made_by)} · ${buildLabel()}",
         modifier, color = Dash.Muted, fontSize = 11.sp,
     )
 }

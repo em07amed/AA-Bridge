@@ -49,7 +49,7 @@ fun AboutScreen(onBack: () -> Unit) {
             }
             Spacer(Modifier.height(16.dp))
             Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium, color = Dash.Text)
-            Text(BuildConfig.VERSION_NAME, style = MaterialTheme.typography.bodyLarge, color = Dash.Muted)
+            Text("${buildLabel()} · ${BuildConfig.GIT_SHA}", style = MaterialTheme.typography.bodyLarge, color = Dash.Muted)
             Spacer(Modifier.height(20.dp))
             Link(stringResource(R.string.made_by), AUTHOR_URL)
             Link(stringResource(R.string.about_original), ORIGINAL_URL)

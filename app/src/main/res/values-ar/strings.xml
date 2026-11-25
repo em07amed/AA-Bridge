@@ -74,7 +74,8 @@
     <string name="help_ask_q">الهاتف يسألني أي تطبيق أفتح</string>
     <string name="help_ask_a">اختر AA Bridge ثم «دائمًا». لن يسألك مرة أخرى.</string>
     <string name="help_setup_again">إعادة الإعداد</string>
-    <string name="made_by">من تطوير عزت</string>
+    <string name="made_by">Enhanced by Ezzat</string>
+    <string name="build_label">إصدار %1$s</string>
     <string name="about_original">مبني على AA Bridge من تطوير Ali Morgan</string>
     <string name="about_credit">مبني على CarAALink من تطوير JObersi10</string>
     <string name="about_license">مجاني ومفتوح المصدر، برخصة GPL-3.0</string>
