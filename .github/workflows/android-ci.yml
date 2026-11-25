@@ -39,11 +39,8 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Road alert tests
-        run: ./gradlew testDebugUnitTest --tests 'dev.caraalink.road.*' --no-daemon
-
-      - name: Build debug APK
-        run: ./gradlew assembleDebug --no-daemon
+      - name: Build debug APK and run unit tests
+        run: ./gradlew assembleDebug testDebugUnitTest --no-daemon
 
       # Releases are signed with the private key kept in the repo's Actions
       # secrets (never committed). Without it the release step fails rather
