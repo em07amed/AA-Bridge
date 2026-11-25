@@ -31,7 +31,7 @@ class Road(
     val fwd: Int?,
     val back: Int?,
     val oneway: Boolean,
-    /** The legal default for this kind of road when no limit is signed (see [RoadMath.defaultLimit]). */
+    /** When no limit is tagged: the named road's announced limit or the legal default (see [RoadMath.namedLimit], [RoadMath.defaultLimit]). */
     val estimate: Int? = null,
 )
 
@@ -86,6 +86,64 @@ object RoadMath {
             "living_street", "service" -> 40
             else -> null
         }
+    }
+
+    /** A named road and its announced limit: every word in [all] must appear, none of [not]. */
+    private class Named(val limit: Int, val all: List<String>, val not: List<String> = emptyList())
+
+    /**
+     * Announced limits for major Egyptian roads that OpenStreetMap usually has no
+     * maxspeed for (Ministry of Interior / General Traffic Department figures as
+     * reported in 2024-2026). More specific entries first. Some roads drop lower
+     * on signed sections; a maxspeed tag on the way always wins over this table.
+     */
+    private val NAMED = listOf(
+        Named(120, listOf("دائري", "اقليمي")), Named(120, listOf("regional", "ring")),
+        Named(120, listOf("دائري", "اوسطي")), Named(120, listOf("middle", "ring")),
+        Named(90, listOf("دائري"), not = listOf("اقليمي", "اوسطي")),
+        Named(90, listOf("ring road"), not = listOf("regional", "middle")),
+        Named(90, listOf("26 يوليو")), Named(90, listOf("26th of july")), Named(90, listOf("26 july")),
+        Named(90, listOf("محور", "الشهيد")),
+        Named(90, listOf("المشير", "طنطاوي")), Named(90, listOf("tantawi")),
+        Named(80, listOf("تيتو")), Named(80, listOf("tito")),
+        Named(80, listOf("شينزو")), Named(80, listOf("shinzo")),
+        Named(80, listOf("كفراوي")), Named(80, listOf("kafrawy")),
+        Named(80, listOf("كمال عامر")),
+        Named(80, listOf("جيهان السادات")),
+        Named(80, listOf("ابو زيد خضر")),
+        Named(80, listOf("محور", "جمال عبد الناصر")),
+        Named(80, listOf("المليون شجره")),
+        Named(80, listOf("امتداد", "رمسيس")),
+        Named(80, listOf("صلاح سالم")), Named(80, listOf("salah salem")),
+        Named(80, listOf("اوتوستراد")), Named(80, listOf("اتوستراد")), Named(80, listOf("autostrad")),
+        Named(120, listOf("شبرا", "بنها", "الحر")),
+        Named(120, listOf("محور", "الضبعه")),
+        Named(120, listOf("حلوان", "الكريمات")),
+        Named(90, listOf("الاسكندريه", "الزراعي")),
+        Named(60, listOf("التسعين")),
+        Named(60, listOf("كوبري", "اكتوبر")), Named(60, listOf("october bridge")),
+        Named(50, listOf("نفق", "الازهر")), Named(50, listOf("azhar tunnel")),
+    )
+
+    /** Strips diacritics and folds alef/yeh/teh marbuta variants so OSM spellings match. */
+    fun normalizeName(s: String): String = s.lowercase()
+        .replace(Regex("[\\u064B-\\u0652\\u0640]"), "")
+        .replace(Regex("[أإآ]"), "ا")
+        .replace('ى', 'ي')
+        .replace('ة', 'ه')
+        .replace('ـ', ' ')
+        .replace(Regex("\\s+"), " ")
+
+    /** The announced limit for a well-known Egyptian road, matched on any of its names. */
+    fun namedLimit(vararg names: String?): Int? {
+        val text = names.filterNotNull().joinToString(" | ") { normalizeName(it) }
+        if (text.isBlank()) return null
+        for (n in NAMED) {
+            val all = n.all.map { normalizeName(it) }
+            val not = n.not.map { normalizeName(it) }
+            if (all.all { text.contains(it) } && not.none { text.contains(it) }) return n.limit
+        }
+        return null
     }
 
     private val cardinal = mapOf(

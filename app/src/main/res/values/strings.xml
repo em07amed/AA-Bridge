@@ -109,7 +109,7 @@
     <string name="road_speed_alerts_title">Speed warning</string>
     <string name="road_speed_alerts_summary">Warn when you go over the limit</string>
     <string name="road_use_osm_limit_title">Use the road\'s speed limit</string>
-    <string name="road_use_osm_limit_summary">The road's limit from OpenStreetMap (red ring), else the legal default for that kind of road: 60 in town, 90 between cities, 100 on motorways (orange ring).</string>
+    <string name="road_use_osm_limit_summary">The road\'s limit from OpenStreetMap (red ring), else the announced limit of major roads (Ring Road 90, Tito and Salah Salem 80, …) or the legal default: 60 in town, 90 between cities, 100 on motorways (orange ring).</string>
     <string name="road_report_parked_title">Tell Android Auto when parked</string>
     <string name="road_report_parked_summary">When GPS speed has been 0 for 5 seconds. Lets Android Auto allow parked-only features such as video and the keyboard.</string>
     <string name="road_manual_limit_title">Limit when the road is unknown</string>

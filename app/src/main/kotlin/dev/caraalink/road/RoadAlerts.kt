@@ -37,7 +37,7 @@ data class RoadState(
     val limit: Int? = null,
     /** The road's signed limit from OpenStreetMap. */
     val limitFromRoad: Boolean = false,
-    /** The legal default for this kind of road (Egypt: 60 city, 90 intercity, 100 motorway). */
+    /** Not signed on OpenStreetMap: the announced limit of this named road, or the legal default for its kind. */
     val limitEstimated: Boolean = false,
     val over: Boolean = false,
     /** Metres to the next camera on our line, when one is within 1 km. */
@@ -503,7 +503,8 @@ object RoadAlerts {
                         RoadMath.parseMaxspeed(tag("maxspeed:forward")) ?: all,
                         RoadMath.parseMaxspeed(tag("maxspeed:backward")) ?: all,
                         oneway,
-                        RoadMath.defaultLimit(tag("highway"), zone),
+                        RoadMath.namedLimit(tag("name"), tag("name:ar"), tag("name:en"), tag("ref"))
+                            ?: RoadMath.defaultLimit(tag("highway"), zone),
                     )
                 }
             }

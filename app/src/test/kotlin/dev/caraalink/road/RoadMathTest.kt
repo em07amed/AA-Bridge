@@ -115,4 +115,20 @@ class RoadMathTest {
         val hit = RoadMath.cameraAhead(listOf(theirs, ours), cairo, 0.0, moving = true, roads = listOf(north, south))
         assertEquals(2L, hit!!.camera.id)
     }
+
+    @Test
+    fun namedEgyptianRoads() {
+        assertEquals(80, RoadMath.namedLimit("محور جوزيف تيتو"))
+        assertEquals(80, RoadMath.namedLimit(null, null, "Shinzo Abe Axis"))
+        assertEquals(90, RoadMath.namedLimit("الطريق الدائري"))
+        assertEquals(120, RoadMath.namedLimit("الطريق الدائري الإقليمي"))
+        assertEquals(120, RoadMath.namedLimit("الدائري الأوسطي"))
+        assertEquals(80, RoadMath.namedLimit("شارع صلاح سالم"))
+        assertEquals(80, RoadMath.namedLimit("طريق الأوتوستراد"))
+        assertEquals(60, RoadMath.namedLimit("شارع التسعين الشمالي"))
+        assertEquals(90, RoadMath.namedLimit("محور 26 يوليو"))
+        assertNull(RoadMath.namedLimit("شارع جمال عبد الناصر")) // a common street name, not the New Cairo axis
+        assertNull(RoadMath.namedLimit("شارع الهرم"))
+        assertNull(RoadMath.namedLimit(null, null))
+    }
 }
