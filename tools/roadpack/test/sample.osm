@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="test">
+  <node id="1" lat="31.0400" lon="31.3700" version="1"/>
+  <node id="2" lat="31.0400" lon="31.3800" version="1"/>
+  <node id="3" lat="31.0400" lon="31.4100" version="1"/>
+  <node id="4" lat="31.0450" lon="31.3750" version="1"/>
+  <node id="5" lat="31.0350" lon="31.3750" version="1"/>
+  <node id="6" lat="31.0401" lon="31.3900" version="1">
+    <tag k="highway" v="speed_camera"/>
+    <tag k="maxspeed" v="60"/>
+    <tag k="direction" v="E"/>
+  </node>
+  <way id="100" version="1">
+    <nd ref="1"/><nd ref="2"/><nd ref="3"/>
+    <tag k="highway" v="primary"/>
+    <tag k="name" v="طريق المنصورة دكرنس"/>
+    <tag k="name:en" v="Mansoura Dekernes Road"/>
+    <tag k="oneway" v="-1"/>
+    <tag k="maxspeed:forward" v="80"/>
+  </way>
+  <way id="200" version="1">
+    <nd ref="4"/><nd ref="5"/>
+    <tag k="highway" v="residential"/>
+    <tag k="maxspeed" v="EG:urban"/>
+  </way>
+  <way id="300" version="1">
+    <nd ref="4"/><nd ref="1"/>
+    <tag k="highway" v="footway"/>
+  </way>
+</osm>

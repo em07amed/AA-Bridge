@@ -145,4 +145,9 @@
     <string name="road_voice_arabic_missing">مفيش صوت عربي على الموبايل: نزّله من الإعدادات، Text-to-speech</string>
     <string name="road_show_weather_title">الحرارة والمدينة</string>
     <string name="road_show_weather_summary">درجة الحرارة برّه (Open-Meteo) والمدينة اللي انت فيها، على شاشة العربية</string>
+    <string name="road_pack_title">خريطة طرق مصر (من غير نت)</string>
+    <string name="road_pack_installed">نسخة %1$s · %2$d ميجا. بتتحدّث لوحدها على الواي فاي، ودوس هنا تشوف لو فيه جديد.</string>
+    <string name="road_pack_missing">لسه مش متحمّلة. بتتحمّل لوحدها على الواي فاي، أو دوس هنا تحمّلها دلوقتي.</string>
+    <string name="road_pack_downloading">بيتحمّل… %1$d%%</string>
+    <string name="road_pack_error">آخر محاولة فشلت: %1$s</string>
 </resources>

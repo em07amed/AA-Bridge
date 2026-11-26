@@ -174,7 +174,10 @@ object RoadAlerts {
             tick()
         }
         tts = TextToSpeech(ctx) { status -> h.post { onTtsInit(status) } }
-        net.execute { pruneTileCache(ctx) }
+        net.execute {
+            pruneTileCache(ctx)
+            if (RoadPackManager.update(ctx, force = false)) h.post { roadTiles.clear(); camAreas.clear() }
+        }
         logger?.log("started")
     }
 
@@ -560,7 +563,11 @@ object RoadAlerts {
     // in central Cairo was big enough to time out, which left no road matched
     // and the limit falling back to the manual one.
 
-    private class Tile(val key: String, val query: String, val maxAgeMs: Long, val roads: Boolean)
+    /** A road tile (row/col in 0.005 deg), or a camera area (rows/cols in 0.05 deg, r0..r1 x c0..c1). */
+    private class Tile(
+        val key: String, val query: String, val maxAgeMs: Long, val roads: Boolean,
+        val r0: Int, val c0: Int, val r1: Int = r0, val c1: Int = c0, val center: LatLon,
+    )
 
     private val roadTiles = LinkedHashMap<String, List<Road>>(32, 0.75f, true)
     private val camAreas = LinkedHashMap<String, List<SpeedCamera>>(8, 0.75f, true)
@@ -595,12 +602,18 @@ object RoadAlerts {
         }
         for ((dy, dx) in order) {
             val (s, w, n, e) = RoadMath.tileBox(ry + dy, rx + dx, RoadMath.ROAD_TILE)
-            out += Tile("r_${ry + dy}_${rx + dx}", RoadMath.roadsQuery(s, w, n, e), 14L * 24 * 3600_000, roads = true)
+            out += Tile(
+                "r_${ry + dy}_${rx + dx}", RoadMath.roadsQuery(s, w, n, e), 14L * 24 * 3600_000, roads = true,
+                r0 = ry + dy, c0 = rx + dx, center = LatLon((s + n) / 2, (w + e) / 2),
+            )
         }
         val (cy, cx) = RoadMath.tileOf(at, RoadMath.CAMERA_TILE)
         val (s, w) = RoadMath.tileBox(cy - 1, cx - 1, RoadMath.CAMERA_TILE)
         val (_, _, n, e) = RoadMath.tileBox(cy + 1, cx + 1, RoadMath.CAMERA_TILE)
-        out += Tile("c_${cy}_$cx", RoadMath.camerasQuery(s, w, n, e), 7L * 24 * 3600_000, roads = false)
+        out += Tile(
+            "c_${cy}_$cx", RoadMath.camerasQuery(s, w, n, e), 7L * 24 * 3600_000, roads = false,
+            r0 = cy - 1, c0 = cx - 1, r1 = cy + 1, c1 = cx + 1, center = at,
+        )
         return out
     }
 
@@ -617,6 +630,18 @@ object RoadAlerts {
     /** Network thread: disk cache, else Overpass (then cached). */
     private fun loadTile(t: Tile) {
         val started = System.currentTimeMillis()
+        // The offline pack answers at once and is authoritative inside its area.
+        val ctx = app
+        if (ctx != null && RoadPackManager.covers(ctx, t.center)) {
+            val fromPack = runCatching {
+                if (t.roads) RoadPackManager.roads(ctx, t.r0, t.c0)?.let { it to emptyList<SpeedCamera>() }
+                else RoadPackManager.cameras(ctx, t.r0, t.c0, t.r1, t.c1)?.let { emptyList<Road>() to it }
+            }.onFailure { logger?.log("pack read failed for ${t.key}: $it") }.getOrNull()
+            if (fromPack != null) {
+                handler?.post { applyTile(t, fromPack, "pack", System.currentTimeMillis() - started) }
+                return
+            }
+        }
         val file = app?.let { File(File(it.cacheDir, "road-tiles"), "${t.key}.json") }
         var body: String? = null
         var fromCache = false
@@ -644,20 +669,27 @@ object RoadAlerts {
                 logger?.log("tile ${t.key} failed: ${error ?: "unreadable"}")
                 return@post
             }
-            retryAt -= t.key
-            if (t.roads) {
-                roadTiles[t.key] = parsed.first
-                while (roadTiles.size > 30) roadTiles.remove(roadTiles.keys.first())
-            } else {
-                camAreas[t.key] = parsed.second
-                while (camAreas.size > 4) camAreas.remove(camAreas.keys.first())
-            }
-            roads = roadTiles.values.flatten().distinctBy { it.id }
-            osmCams = camAreas.values.flatten().distinctBy { it.id }
-            mergeCams()
-            val ms = System.currentTimeMillis() - started
-            logger?.log("tile ${t.key}${if (fromCache) " (cache)" else ""}: ${parsed.first.size} roads, ${parsed.second.size} cameras in ${ms} ms")
+            applyTile(t, parsed, if (fromCache) "cache" else "net", System.currentTimeMillis() - started)
         }
+    }
+
+    /** Road-alerts thread: stores a loaded tile and rebuilds the road and camera lists. */
+    private fun applyTile(t: Tile, data: Pair<List<Road>, List<SpeedCamera>>, source: String, ms: Long) {
+        pending -= t.key
+        retryAt -= t.key
+        if (t.roads) {
+            roadTiles[t.key] = data.first
+            while (roadTiles.size > 30) roadTiles.remove(roadTiles.keys.first())
+        } else {
+            camAreas[t.key] = data.second
+            while (camAreas.size > 4) camAreas.remove(camAreas.keys.first())
+        }
+        // Overpass returns whole ways (the same way from several tiles); the pack
+        // returns per-tile pieces of a way, which must all stay.
+        roads = roadTiles.values.flatten().distinctBy { it.id to it.pts.first() }
+        osmCams = camAreas.values.flatten().distinctBy { it.id }
+        mergeCams()
+        logger?.log("tile ${t.key} ($source): ${data.first.size} roads, ${data.second.size} cameras in $ms ms")
     }
 
     /** Asks every endpoint at once and returns the first good answer. */

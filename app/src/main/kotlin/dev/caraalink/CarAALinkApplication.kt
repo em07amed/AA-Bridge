@@ -45,6 +45,8 @@ class CarAALinkApplication : Application() {
         }.getOrDefault("not installed")
         logger.log("phone=${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} android=${android.os.Build.VERSION.RELEASE} " +
             "sdk=${android.os.Build.VERSION.SDK_INT} androidAuto=$androidAuto")
+        // Offline Egypt roads pack: checked once a day, downloaded on Wi-Fi.
+        Thread({ dev.caraalink.road.RoadPackManager.update(this, force = false) }, "road-pack").start()
     }
 
     /**

@@ -109,6 +109,9 @@
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/road_category">
+        <Preference
+            android:key="road_pack"
+            android:title="@string/road_pack_title" />
         <SwitchPreferenceCompat
             android:key="road_speed_alerts"
             android:title="@string/road_speed_alerts_title"

@@ -165,4 +165,9 @@
     <string name="support_in_egypt" translatable="false">في مصر؟</string>
     <string name="car_support_line" translatable="false">ادعمه بتمن فنجان قهوة، مثلاً 50 أو 100 جنيه</string>
     <string name="car_support_open_aa" translatable="false">افتح Android Auto</string>
+    <string name="road_pack_title">Egypt roads (offline)</string>
+    <string name="road_pack_installed">Version %1$s · %2$d MB. Updates itself on Wi-Fi; tap to check now.</string>
+    <string name="road_pack_missing">Not downloaded yet. Downloads itself on Wi-Fi; tap to download now.</string>
+    <string name="road_pack_downloading">Downloading… %1$d%%</string>
+    <string name="road_pack_error">Last try failed: %1$s</string>
 </resources>

@@ -62,6 +62,25 @@ class SettingsActivity : AppCompatActivity() {
                 showCarProfilesDialog()
                 true
             }
+            findPreference<Preference>("road_pack")?.let { pref ->
+                val app = requireContext().applicationContext
+                pref.summary = dev.caraalink.road.RoadPackManager.status(app)
+                pref.setOnPreferenceClickListener {
+                    Thread({ dev.caraalink.road.RoadPackManager.update(app, force = true) }, "road-pack").start()
+                    // Refresh the summary while it checks and downloads.
+                    val main = android.os.Handler(android.os.Looper.getMainLooper())
+                    val started = System.currentTimeMillis()
+                    main.postDelayed(object : Runnable {
+                        override fun run() {
+                            if (!isAdded) return
+                            pref.summary = dev.caraalink.road.RoadPackManager.status(app)
+                            val busy = dev.caraalink.road.RoadPackManager.progress != null
+                            if (busy || System.currentTimeMillis() - started < 8_000) main.postDelayed(this, 1_000)
+                        }
+                    }, 500)
+                    true
+                }
+            }
             findPreference<Preference>("check_for_updates_now")?.setOnPreferenceClickListener {
                 dev.caraalink.update.UpdateChecker.checkNow(requireContext(), manual = true)
                 true
