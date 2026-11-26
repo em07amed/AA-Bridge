@@ -9,7 +9,7 @@ run-name: >-
 
 on:
   push:
-    branches: [main, speed-radar-alerts]
+    branches: [main, speed-radar-alerts, release-check]
   pull_request:
   workflow_dispatch:
 
@@ -66,6 +66,20 @@ jobs:
       - name: Build release APK
         if: github.event_name == 'push' && github.ref == 'refs/heads/speed-radar-alerts'
         run: ./gradlew assembleRelease --no-daemon
+
+      # release-check: build the shrunk release without the signing key or a
+      # public release, and park the unsigned APK in a draft release for inspection.
+      - name: Check the release build
+        if: github.event_name == 'push' && github.ref == 'refs/heads/release-check'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ./gradlew assembleRelease --no-daemon
+          ls -l app/build/outputs/apk/release/
+          gh release delete release-check --yes 2>/dev/null || true
+          gh release create release-check --draft --target "$GITHUB_SHA" --title "Release check" \
+            --notes "Unsigned shrunk build for inspection, not for install." \
+            app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/mapping/release/usage.txt
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v7
