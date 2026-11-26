@@ -8,9 +8,13 @@
 **⚡ الطرق أسرع لو برّه الملف**
 - لو مكان مش في الملف، الـ app بيطلب من 4 سيرفرات مع بعض وبياخد أسرع رد، وبيحمّل الطرق اللي قدّامك قبل ما توصلها.
 
+**📦 الأبلكيشن بقى أصغر بكتير**
+- حجم الـ APK نزل من 23 ميجا لـ 4.3 ميجا، لأن الكود والموارد اللي مش مستعملة اتشالت، والباقي اتعمله تحسين.
+
 ---
 
 ## What's new
 
 - **Offline Egypt roads pack:** all 1.3 M roads and 666 cameras on the phone, so limits and cameras show instantly with no network. About 42 MB, downloaded on Wi-Fi (tap "Egypt roads (offline)" in settings to get it on mobile data), refreshed weekly from OpenStreetMap.
 - **Faster online fallback:** tiles load in parallel from four Overpass mirrors, and the road ahead is prefetched.
+- **Smaller app:** R8 shrinking takes the APK from 23 MB to 4.3 MB.
