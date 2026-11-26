@@ -39,7 +39,7 @@ jobs:
 
       - name: Download Egypt from Geofabrik
         run: |
-          curl -fsSL -o egypt.osm.pbf https://download.geofabrik.de/africa/egypt-latest.osm.pbf
+          curl -fsSL --retry 5 --retry-delay 60 --retry-all-errors -o egypt.osm.pbf https://download.geofabrik.de/africa/egypt-latest.osm.pbf
           ls -l egypt.osm.pbf
 
       - name: Keep only roads and speed cameras
