@@ -29,7 +29,10 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 import java.util.Locale
+import java.util.concurrent.Callable
 import java.util.concurrent.CopyOnWriteArraySet
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.ExecutorCompletionService
 import java.util.concurrent.Executors
 import kotlin.math.roundToInt
 
@@ -70,9 +73,12 @@ data class RoadState(
  */
 object RoadAlerts {
     private const val UA = "AABridge-RoadAlerts/1.0 (+https://github.com/em07amed/AA-Bridge)"
+    /** Public Overpass servers; each tile asks all of them at once and keeps the first answer. */
     private val ENDPOINTS = listOf(
         "https://overpass-api.de/api/interpreter",
         "https://overpass.kumi.systems/api/interpreter",
+        "https://overpass.private.coffee/api/interpreter",
+        "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
     )
     private const val FIXES = "road_alerts"
 
@@ -107,6 +113,9 @@ object RoadAlerts {
     private var thread: HandlerThread? = null
     @Volatile private var handler: Handler? = null
     private val net = Executors.newSingleThreadExecutor()
+    /** Three tiles load at once (a drive log showed ~45 s per tile one at a time). */
+    private val tilePool = Executors.newFixedThreadPool(3)
+    private val race = Executors.newCachedThreadPool()
     private var logger: DiagnosticLogger? = null
 
     private var tts: TextToSpeech? = null
@@ -537,6 +546,7 @@ object RoadAlerts {
                 placeLoading = false
                 if (t != null) tempC = t
                 if (name != null) city = name
+                logger?.log("place: ${t ?: "-"}° ${name ?: "-"}")
                 publish()
             }
         }
@@ -575,7 +585,14 @@ object RoadAlerts {
         val out = ArrayList<Tile>()
         val (ry, rx) = RoadMath.tileOf(at, RoadMath.ROAD_TILE)
         // The car's own tile first, then its neighbours.
-        val order = listOf(0 to 0, -1 to 0, 1 to 0, 0 to -1, 0 to 1, -1 to -1, -1 to 1, 1 to -1, 1 to 1)
+        // The car's tile, then the tiles ahead in the direction of travel (two deep),
+        // then the rest of the 3x3 -- so data is there before the car is.
+        val around = listOf(0 to 0, -1 to 0, 1 to 0, 0 to -1, 0 to 1, -1 to -1, -1 to 1, 1 to -1, 1 to 1)
+        val order = if (heading.isNaN()) around else {
+            val ay = Math.round(Math.cos(Math.toRadians(heading))).toInt()
+            val ax = Math.round(Math.sin(Math.toRadians(heading))).toInt()
+            (listOf(0 to 0, ay to ax, 2 * ay to 2 * ax) + around).distinct()
+        }
         for ((dy, dx) in order) {
             val (s, w, n, e) = RoadMath.tileBox(ry + dy, rx + dx, RoadMath.ROAD_TILE)
             out += Tile("r_${ry + dy}_${rx + dx}", RoadMath.roadsQuery(s, w, n, e), 14L * 24 * 3600_000, roads = true)
@@ -593,12 +610,13 @@ object RoadAlerts {
             val have = if (t.roads) roadTiles.containsKey(t.key) else camAreas.containsKey(t.key)
             if (have || t.key in pending || now < (retryAt[t.key] ?: 0L)) continue
             pending += t.key
-            net.execute { loadTile(t) }
+            tilePool.execute { loadTile(t) }
         }
     }
 
     /** Network thread: disk cache, else Overpass (then cached). */
     private fun loadTile(t: Tile) {
+        val started = System.currentTimeMillis()
         val file = app?.let { File(File(it.cacheDir, "road-tiles"), "${t.key}.json") }
         var body: String? = null
         var fromCache = false
@@ -637,35 +655,50 @@ object RoadAlerts {
             roads = roadTiles.values.flatten().distinctBy { it.id }
             osmCams = camAreas.values.flatten().distinctBy { it.id }
             mergeCams()
-            logger?.log("tile ${t.key}${if (fromCache) " (cache)" else ""}: ${parsed.first.size} roads, ${parsed.second.size} cameras")
+            val ms = System.currentTimeMillis() - started
+            logger?.log("tile ${t.key}${if (fromCache) " (cache)" else ""}: ${parsed.first.size} roads, ${parsed.second.size} cameras in ${ms} ms")
         }
     }
 
+    /** Asks every endpoint at once and returns the first good answer. */
     private fun download(query: String): String {
+        val cs = ExecutorCompletionService<String>(race)
+        val futures = ENDPOINTS.map { ep -> cs.submit(Callable { fetchFrom(ep, query) }) }
         var error: Exception? = null
-        for (endpoint in ENDPOINTS) {
-            try {
-                val c = URL(endpoint).openConnection() as HttpURLConnection
-                c.connectTimeout = 15_000
-                c.readTimeout = 45_000
-                c.requestMethod = "POST"
-                c.doOutput = true
-                c.setRequestProperty("User-Agent", UA)
-                c.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
-                c.outputStream.use { it.write(("data=" + URLEncoder.encode(query, "UTF-8")).toByteArray()) }
-                val code = c.responseCode
-                if (code == 429 || code == 504) busyUntil = System.currentTimeMillis() + 60_000
-                if (code != 200) throw IOException("HTTP $code from $endpoint")
-                val body = c.inputStream.bufferedReader().use { it.readText() }
-                c.disconnect()
-                // Overpass reports a timeout as HTTP 200 with partial data and a remark.
-                if (body.contains("\"remark\"") && body.contains("runtime error")) throw IOException("Overpass timeout at $endpoint")
-                return body
-            } catch (e: Exception) {
-                error = e
+        try {
+            repeat(futures.size) {
+                try {
+                    return cs.take().get()
+                } catch (e: ExecutionException) {
+                    error = (e.cause as? Exception) ?: e
+                }
             }
+        } finally {
+            futures.forEach { it.cancel(true) }
         }
         throw error ?: IOException("no endpoint")
+    }
+
+    private fun fetchFrom(endpoint: String, query: String): String {
+        val c = URL(endpoint).openConnection() as HttpURLConnection
+        try {
+            c.connectTimeout = 10_000
+            c.readTimeout = 25_000
+            c.requestMethod = "POST"
+            c.doOutput = true
+            c.setRequestProperty("User-Agent", UA)
+            c.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
+            c.outputStream.use { it.write(("data=" + URLEncoder.encode(query, "UTF-8")).toByteArray()) }
+            val code = c.responseCode
+            if (code == 429) busyUntil = System.currentTimeMillis() + 30_000
+            if (code != 200) throw IOException("HTTP $code from $endpoint")
+            val body = c.inputStream.bufferedReader().use { it.readText() }
+            // Overpass reports a timeout as HTTP 200 with partial data and a remark.
+            if (body.contains("\"remark\"") && body.contains("runtime error")) throw IOException("Overpass timeout at $endpoint")
+            return body
+        } finally {
+            c.disconnect()
+        }
     }
 
     private fun parse(body: String): Pair<List<Road>, List<SpeedCamera>> {
