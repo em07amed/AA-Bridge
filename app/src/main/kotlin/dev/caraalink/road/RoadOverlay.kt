@@ -103,14 +103,14 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
         (column.layoutParams as LayoutParams).setMargins(m, m, m, m)
         column.requestLayout()
 
-        val d = (u * 16f).toInt()
+        val d = (u * 11f).toInt()
         sign.layoutParams = LinearLayout.LayoutParams(d, d).apply { rightMargin = gap }
-        sign.setTextSize(TypedValue.COMPLEX_UNIT_PX, u * 7f)
+        sign.setTextSize(TypedValue.COMPLEX_UNIT_PX, u * 5f)
 
-        speed.setTextSize(TypedValue.COMPLEX_UNIT_PX, u * 8f)
+        speed.setTextSize(TypedValue.COMPLEX_UNIT_PX, u * 5.5f)
         speed.minWidth = d
         speed.minHeight = d
-        speed.setPadding(gap * 2, gap, gap * 2, gap)
+        speed.setPadding(gap, gap / 2, gap, gap / 2)
 
         radar.setTextSize(TypedValue.COMPLEX_UNIT_PX, u * 5.5f)
         radar.setPadding(gap * 2, gap, gap * 2, gap)
@@ -153,7 +153,7 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
                 shape = GradientDrawable.OVAL
                 setColor(Color.WHITE)
                 setStroke(
-                    (u * 1.8f).toInt().coerceAtLeast(2),
+                    (u * 1.2f).toInt().coerceAtLeast(2),
                     when {
                         s.limitFromUser -> BLUE
                         s.limitFromRoad -> RED

@@ -1,20 +1,15 @@
 ## الجديد في النسخة دي
 
-**🗺️ ملف طرق مصر من غير نت**
-- كل طرق مصر (1.3 مليون طريق) و666 رادار متخزّنين على الموبايل، فحد السرعة والرادار بيبانوا على طول من غير ما يستنّى الإنترنت.
-- الملف حجمه حوالي 42 ميجا، وبينزل لوحده أول مرة تكون على Wi-Fi. ولو عايز تنزّله على الداتا، دوس على "خريطة طرق مصر (من غير نت)" في الإعدادات.
-- بيتحدّث كل أسبوع من OpenStreetMap، والـ app بيشوف التحديث مرة في اليوم.
+**🎯 علامة الحد والسرعة أصغر**
+- علامة حد السرعة ومربع السرعة اللي جنبها بقوا أصغر بحوالي الثلث، فمبقوش بيغطّوا الخريطة.
+- الحلقة حوالين الحد بقت أرفع، والألوان زي ما هي: أحمر للحد المكتوب على الطريق، برتقالي للحد المتوقع، وأزرق للحد اللي حددته بصوتك.
 
-**⚡ الطرق أسرع لو برّه الملف**
-- لو مكان مش في الملف، الـ app بيطلب من 4 سيرفرات مع بعض وبياخد أسرع رد، وبيحمّل الطرق اللي قدّامك قبل ما توصلها.
-
-**📦 الأبلكيشن بقى أصغر بكتير**
-- حجم الـ APK نزل من 23 ميجا لـ 4.3 ميجا، لأن الكود والموارد اللي مش مستعملة اتشالت، والباقي اتعمله تحسين.
+**🗺️ ملف الطرق**
+- تحديث ملف طرق مصر كل أسبوع بقى يحاول تاني لوحده لو سيرفر الخرايط مردّش.
 
 ---
 
 ## What's new
 
-- **Offline Egypt roads pack:** all 1.3 M roads and 666 cameras on the phone, so limits and cameras show instantly with no network. About 42 MB, downloaded on Wi-Fi (tap "Egypt roads (offline)" in settings to get it on mobile data), refreshed weekly from OpenStreetMap.
-- **Faster online fallback:** tiles load in parallel from four Overpass mirrors, and the road ahead is prefetched.
-- **Smaller app:** R8 shrinking takes the APK from 23 MB to 4.3 MB.
+- **Smaller limit sign and speed box** on the car screen (about a third smaller, thinner ring), so they cover less of the map.
+- **Roads pack:** the weekly refresh retries when the map server doesn't answer.
