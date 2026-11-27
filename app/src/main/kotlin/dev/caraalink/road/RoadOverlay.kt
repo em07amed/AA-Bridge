@@ -31,8 +31,9 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
     private val column = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
     private val radar = label()
     private val row = LinearLayout(context).apply {
-        orientation = LinearLayout.HORIZONTAL
-        gravity = Gravity.CENTER_VERTICAL
+        // Limit sign on top, speed under it.
+        orientation = LinearLayout.VERTICAL
+        gravity = Gravity.CENTER_HORIZONTAL
         layoutDirection = View.LAYOUT_DIRECTION_LTR // sign then speed, in any language
     }
     private val sign = label().apply { setTextColor(Color.BLACK) }
@@ -104,7 +105,7 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
         column.requestLayout()
 
         val d = (u * 11f).toInt()
-        sign.layoutParams = LinearLayout.LayoutParams(d, d).apply { rightMargin = gap }
+        sign.layoutParams = LinearLayout.LayoutParams(d, d).apply { bottomMargin = gap }
         sign.setTextSize(TypedValue.COMPLEX_UNIT_PX, u * 5f)
 
         speed.setTextSize(TypedValue.COMPLEX_UNIT_PX, u * 5.5f)
