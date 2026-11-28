@@ -100,7 +100,8 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
     private fun applySizes() {
         val u = unit
         val gap = (u * 1.5f).toInt()
-        val m = (u * 3f).toInt()
+        // Hug the screen edge; just enough to clear the rounded corner of the AA view.
+        val m = (u * 0.8f).toInt().coerceAtLeast(2)
         (column.layoutParams as LayoutParams).setMargins(m, m, m, m)
         column.requestLayout()
 
