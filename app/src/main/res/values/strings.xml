@@ -175,10 +175,6 @@
     <string name="road_pack_missing">Not downloaded yet. Downloads itself on Wi-Fi; tap to download now.</string>
     <string name="road_pack_downloading">Downloading… %1$d%%</string>
     <string name="road_pack_error">Last try failed: %1$s</string>
-    <string name="road_limit_ahead_title">Warn before a lower limit</string>
-    <string name="road_limit_ahead_summary">When the road ahead has a lower limit and you are faster than it: \"Limit drops to 60 in 300 metres\".</string>
-    <string name="road_say_limit_ahead">Limit drops to %1$d in %2$d metres.</string>
-    <string name="road_note_limit_ahead">⬇ %1$d in %2$d m</string>
     <string name="road_trip_summary_title">Trip summary</string>
     <string name="road_trip_summary_summary">After two minutes parked, or when the car is switched off: distance, time, top speed and how often you went over the limit, on the car screen and in a notification.</string>
     <string name="road_trip_summary">🏁 %1$s km • %2$s min • top %3$d km/h • over the limit %4$d×</string>

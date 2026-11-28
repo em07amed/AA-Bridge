@@ -142,11 +142,6 @@
             android:summary="@string/road_camera_alerts_summary"
             android:defaultValue="true" />
         <SwitchPreferenceCompat
-            android:key="road_limit_ahead_alerts"
-            android:title="@string/road_limit_ahead_title"
-            android:summary="@string/road_limit_ahead_summary"
-            android:defaultValue="true" />
-        <SwitchPreferenceCompat
             android:key="road_trip_summary"
             android:title="@string/road_trip_summary_title"
             android:summary="@string/road_trip_summary_summary"

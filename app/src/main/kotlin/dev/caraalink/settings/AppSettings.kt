@@ -212,9 +212,6 @@ object AppSettings {
     fun roadBumpAlerts(context: Context): Boolean =
         prefs(context).getBoolean("road_bump_alerts", true)
 
-    fun roadLimitAheadAlerts(context: Context): Boolean =
-        prefs(context).getBoolean("road_limit_ahead_alerts", true)
-
     fun roadTripSummary(context: Context): Boolean =
         prefs(context).getBoolean("road_trip_summary", true)
 

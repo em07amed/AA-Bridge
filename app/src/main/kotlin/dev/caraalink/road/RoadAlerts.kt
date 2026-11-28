@@ -157,8 +157,6 @@ object RoadAlerts {
     private var nextBump: CameraAhead? = null
     private var trip: Trip? = null
     private var tripCard: String? = null
-    /** Road and limit of the last lower-limit-ahead warning, so it is said once. */
-    private var aheadSaid: Pair<Long, Int>? = null
     private var speeding = false
     private var lastNag = 0L
     private var muted = false
@@ -341,7 +339,6 @@ object RoadAlerts {
         matchRoad(at)
         val limit = currentLimit(ctx).limit
         checkSpeed(ctx, limit)
-        checkLimitAhead(ctx, at, limit)
         checkCameras(ctx, at, limit)
         checkBumps(ctx, at)
         publish()
@@ -472,33 +469,6 @@ object RoadAlerts {
         } else if (!c.nearSaid && hit.meters <= 200 && camLimit != null && kmh > camLimit) {
             c.nearSaid = true
             say(vs(R.string.road_say_camera_near, camLimit))
-        }
-    }
-
-    // ---------- lower limit ahead ----------
-
-    /**
-     * Follows our road about 400 m ahead; where the next road has a lower
-     * limit and we are faster than it, says so once ("الحد هيبقى 60 بعد 300 متر").
-     */
-    private fun checkLimitAhead(ctx: Context, at: LatLon, limit: Int?) {
-        val r = road
-        val kmh = speedKmh ?: return
-        if (!AppSettings.roadLimitAheadAlerts(ctx) || r == null || limit == null || kmh < 25 || heading.isNaN()) return
-        for ((p, dir) in RoadMath.pointsAhead(r, at, heading, listOf(100.0, 200.0, 300.0, 400.0))) {
-            val m = RoadMath.matchRoad(roads, p, dir) ?: continue
-            if (m.road.id == r.id) continue
-            val next = userLimitFor(m.road)
-                ?: (if (AppSettings.roadUseOsmLimit(ctx)) m.limit ?: m.road.estimate else null)
-                ?: return
-            if (next >= limit || kmh <= next + AppSettings.roadTolerance(ctx)) return
-            val key = m.road.id to next
-            if (key == aheadSaid) return
-            aheadSaid = key
-            val meters = ((RoadMath.distanceM(at, p) / 50).roundToInt() * 50).coerceAtLeast(50)
-            say(vs(R.string.road_say_limit_ahead, next, meters))
-            showNoteText(ctx.getString(R.string.road_note_limit_ahead, next, meters), 6_000)
-            return
         }
     }
 
