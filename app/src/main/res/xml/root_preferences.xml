@@ -141,6 +141,16 @@
             android:title="@string/road_camera_alerts_title"
             android:summary="@string/road_camera_alerts_summary"
             android:defaultValue="true" />
+        <SwitchPreferenceCompat
+            android:key="road_bump_alerts"
+            android:title="@string/road_bump_alerts_title"
+            android:summary="@string/road_bump_alerts_summary"
+            android:defaultValue="true" />
+        <SwitchPreferenceCompat
+            android:key="road_always_show_speed"
+            android:title="@string/road_always_show_speed_title"
+            android:summary="@string/road_always_show_speed_summary"
+            android:defaultValue="false" />
         <ListPreference
             android:key="road_alert_sound"
             android:title="@string/road_alert_sound_title"

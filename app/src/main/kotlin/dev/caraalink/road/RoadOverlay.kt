@@ -18,11 +18,12 @@ import dev.caraalink.R
 import dev.caraalink.settings.AppSettings
 
 /**
- * Drawn over Android Auto on the car screen: a limit sign, your speed (red
- * when over), the next camera, and a short note after an action. It sits in
- * the same view tree that is encoded to the car, so it needs no help from
- * Android Auto. Only the badges take touches -- tap to mute, long-press the
- * speed to save a camera here, long-press the camera banner to remove it.
+ * Drawn over Android Auto on the car screen: a limit sign, your speed (only
+ * when over the limit, red), the next camera or speed bump, and a short note
+ * after an action. It sits in the same view tree that is encoded to the car,
+ * so it needs no help from Android Auto. Only the badges take touches -- tap
+ * the sign and speak, long-press it to mute, long-press the speed to save a
+ * camera here, long-press the camera banner to remove it.
  * Everywhere else, touches fall through to Android Auto.
  */
 @SuppressLint("ViewConstructor")
@@ -30,6 +31,7 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
 
     private val column = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
     private val radar = label()
+    private val bump = label()
     private val row = LinearLayout(context).apply {
         // Limit sign on top, speed under it.
         orientation = LinearLayout.VERTICAL
@@ -58,14 +60,17 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
         row.addView(speed)
         column.addView(place)
         column.addView(radar)
+        column.addView(bump)
         column.addView(row)
         column.addView(note)
         addView(column, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, vertical or horizontal))
 
         row.setOnClickListener { RoadAlerts.toggleMute() }
         row.setOnLongClickListener { RoadAlerts.addCameraHere(); true }
-        // Tap the sign and say the limit -- for roads with none, or a wrong one.
+        // Tap the sign and say the limit (for roads with none, or a wrong one), "رادار" or "مطب".
         sign.setOnClickListener { VoiceLimit.listen(context) }
+        // The speed is often hidden (Google Maps shows its own), so the sign mutes too.
+        sign.setOnLongClickListener { RoadAlerts.toggleMute(); true }
         radar.setOnClickListener { RoadAlerts.toggleMute() }
         radar.setOnLongClickListener { RoadAlerts.removeNextCamera(); true }
         render(last)
@@ -121,6 +126,12 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
         radar.layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
             .apply { bottomMargin = gap }
 
+        bump.setTextSize(TypedValue.COMPLEX_UNIT_PX, u * 4.5f)
+        bump.setPadding(gap * 2, gap, gap * 2, gap)
+        bump.layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            .apply { bottomMargin = gap }
+        bump.background = rounded(ORANGE)
+
         place.setTextSize(TypedValue.COMPLEX_UNIT_PX, u * 4.5f)
         place.setPadding(gap * 2, gap, gap * 2, gap)
         place.layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
@@ -170,6 +181,9 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
 
         val kmh = s.speedKmh
         row.visibility = if (kmh != null) View.VISIBLE else View.GONE
+        // Google Maps shows the speed already: ours only when over the limit or muted, unless asked always.
+        speed.visibility =
+            if (kmh != null && (s.over || s.muted || AppSettings.roadAlwaysShowSpeed(context))) View.VISIBLE else View.GONE
         if (kmh != null) {
             val text = SpannableStringBuilder(kmh.toString())
             val unitText = "\n" + context.getString(R.string.road_kmh) + if (s.muted) " 🔇" else ""
@@ -189,6 +203,10 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
             radar.background = rounded(RED)
         }
 
+        val b = s.bumpM
+        bump.visibility = if (b != null) View.VISIBLE else View.GONE
+        if (b != null) bump.text = context.getString(R.string.road_bump_banner, (b + 5) / 10 * 10)
+
         val placeText = listOfNotNull(s.tempC?.let { "$it°" }, s.city).joinToString("  ")
         place.visibility = if (placeText.isNotEmpty()) View.VISIBLE else View.GONE
         place.text = placeText
@@ -197,7 +215,8 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
         note.text = s.note ?: ""
 
         column.visibility =
-            if (row.visibility == View.VISIBLE || radar.visibility == View.VISIBLE || note.visibility == View.VISIBLE ||
+            if (row.visibility == View.VISIBLE || radar.visibility == View.VISIBLE || bump.visibility == View.VISIBLE ||
+                note.visibility == View.VISIBLE ||
                 place.visibility == View.VISIBLE
             ) View.VISIBLE
             else View.GONE

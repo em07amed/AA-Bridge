@@ -56,6 +56,8 @@ data class RoadState(
     /** Metres to the next camera on our line, when one is within 1 km. */
     val cameraM: Int? = null,
     val cameraLimit: Int? = null,
+    /** Metres to the next speed bump on our line, while it is close enough to warn about. */
+    val bumpM: Int? = null,
     val muted: Boolean = false,
     /** Short confirmation shown for a few seconds ("Camera saved here"). */
     val note: String? = null,
@@ -129,6 +131,7 @@ object RoadAlerts {
     private var myCams = mutableListOf<SpeedCamera>()
     private var hidden = mutableSetOf<Long>()
     private var cameras: List<SpeedCamera> = emptyList()
+    private var bumps: List<SpeedCamera> = emptyList()
 
     private var last: LatLon? = null
     private var lastFixAt = 0L
@@ -147,6 +150,7 @@ object RoadAlerts {
     private var roadSeen = 0L
 
     private var next: CameraAhead? = null
+    private var nextBump: CameraAhead? = null
     private var speeding = false
     private var lastNag = 0L
     private var muted = false
@@ -206,14 +210,24 @@ object RoadAlerts {
         logger?.log("stopped")
     }
 
-    /** Car-screen actions (long-press / tap on the overlay). */
-    fun addCameraHere() {
+    /** Car-screen actions (long-press / tap on the overlay, or said after tapping the sign). */
+    fun addCameraHere(limit: Int? = null) {
         handler?.post {
             val at = last ?: return@post
-            myCams += SpeedCamera(-System.currentTimeMillis(), at, null, heading.takeUnless { it.isNaN() })
+            myCams += SpeedCamera(-System.currentTimeMillis(), at, limit, heading.takeUnless { it.isNaN() })
             saveFixes()
             mergeCams()
             showNote(R.string.road_note_camera_added)
+        }
+    }
+
+    fun addBumpHere() {
+        handler?.post {
+            val at = last ?: return@post
+            myCams += SpeedCamera(-System.currentTimeMillis(), at, null, null, bump = true)
+            saveFixes()
+            mergeCams()
+            showNote(R.string.road_note_bump_added)
         }
     }
 
@@ -318,6 +332,7 @@ object RoadAlerts {
         val limit = currentLimit(ctx).limit
         checkSpeed(ctx, limit)
         checkCameras(ctx, at, limit)
+        checkBumps(ctx, at)
         publish()
     }
 
@@ -447,9 +462,32 @@ object RoadAlerts {
         }
     }
 
+    // ---------- speed bumps ----------
+
+    private fun checkBumps(ctx: Context, at: LatLon) {
+        val kmh = speedKmh ?: 0.0
+        val moving = kmh > 15 && !heading.isNaN()
+        if (!AppSettings.roadBumpAlerts(ctx) || !moving) {
+            nextBump = null
+            return
+        }
+        // About 7 seconds ahead, at least 60 m and at most 200 m.
+        val warnM = (kmh / 3.6 * 7).coerceIn(60.0, 200.0)
+        val hit = RoadMath.cameraAhead(bumps, at, heading, true, roads)?.takeIf { it.meters <= warnM }
+        nextBump = hit
+        val b = hit?.camera ?: return
+        if (b.farSaid) return
+        // Bumps often come in rows: one warning for those just after it.
+        for (o in bumps) if (RoadMath.distanceM(o.at, b.at) <= 80) o.farSaid = true
+        val m = ((hit.meters / 10).roundToInt() * 10).coerceAtLeast(10)
+        say(vs(R.string.road_say_bump, m))
+    }
+
     private fun mergeCams() {
-        val old = cameras.associateBy { it.id }
-        cameras = (osmCams + myCams).filter { it.id !in hidden }.map { old[it.id] ?: it }
+        val old = (cameras + bumps).associateBy { it.id }
+        val all = (osmCams + myCams).filter { it.id !in hidden }.map { old[it.id] ?: it }
+        cameras = all.filter { !it.bump }
+        bumps = all.filter { it.bump }
     }
 
     private fun loadFixes() {
@@ -463,6 +501,7 @@ object RoadAlerts {
                     LatLon(o.getDouble("lat"), o.getDouble("lon")),
                     if (o.has("limit")) o.getInt("limit") else null,
                     if (o.has("heading")) o.getDouble("heading") else null,
+                    bump = o.optBoolean("bump", false),
                 )
             }.toMutableList()
             val h = JSONArray(p.getString("hidden_cameras", "[]"))
@@ -490,6 +529,7 @@ object RoadAlerts {
             val o = JSONObject().put("id", c.id).put("lat", c.at.lat).put("lon", c.at.lon)
             c.limit?.let { o.put("limit", it) }
             c.heading?.let { o.put("heading", it) }
+            if (c.bump) o.put("bump", true)
             mine.put(o)
         }
         val u = JSONArray()
@@ -611,7 +651,7 @@ object RoadAlerts {
         val (s, w) = RoadMath.tileBox(cy - 1, cx - 1, RoadMath.CAMERA_TILE)
         val (_, _, n, e) = RoadMath.tileBox(cy + 1, cx + 1, RoadMath.CAMERA_TILE)
         out += Tile(
-            "c_${cy}_$cx", RoadMath.camerasQuery(s, w, n, e), 7L * 24 * 3600_000, roads = false,
+            "cb_${cy}_$cx", RoadMath.camerasQuery(s, w, n, e), 7L * 24 * 3600_000, roads = false,
             r0 = cy - 1, c0 = cx - 1, r1 = cy + 1, c1 = cx + 1, center = at,
         )
         return out
@@ -742,12 +782,14 @@ object RoadAlerts {
             val tags = e.optJSONObject("tags") ?: JSONObject()
             fun tag(k: String): String? = if (tags.has(k)) tags.optString(k) else null
             when (e.optString("type")) {
-                "node" -> cams += SpeedCamera(
+                "node" -> cams += if (tag("highway") == "speed_camera") SpeedCamera(
                     e.getLong("id"),
                     LatLon(e.getDouble("lat"), e.getDouble("lon")),
                     RoadMath.parseMaxspeed(tag("maxspeed")),
                     RoadMath.parseDirection(tag("direction") ?: tag("camera:direction")),
-                )
+                ) else if (tag("traffic_calming") in RoadMath.BUMPS) SpeedCamera(
+                    e.getLong("id"), LatLon(e.getDouble("lat"), e.getDouble("lon")), null, null, bump = true,
+                ) else continue
                 "way" -> {
                     val g = e.optJSONArray("geometry") ?: continue
                     val pts = (0 until g.length()).mapNotNull { j ->
@@ -898,6 +940,7 @@ object RoadAlerts {
             over = kmh != null && limit != null && kmh > limit + AppSettings.roadTolerance(ctx),
             cameraM = cam?.meters?.roundToInt(),
             cameraLimit = cam?.camera?.limit ?: cam?.let { limit },
+            bumpM = nextBump?.meters?.roundToInt(),
             muted = muted,
             note = note?.takeIf { System.currentTimeMillis() < noteUntil },
         )

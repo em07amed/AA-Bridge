@@ -209,6 +209,13 @@ object AppSettings {
     fun roadCameraAlerts(context: Context): Boolean =
         prefs(context).getBoolean("road_camera_alerts", true)
 
+    fun roadBumpAlerts(context: Context): Boolean =
+        prefs(context).getBoolean("road_bump_alerts", true)
+
+    /** Off by default: Google Maps shows the speed, so the overlay shows it only when over the limit. */
+    fun roadAlwaysShowSpeed(context: Context): Boolean =
+        prefs(context).getBoolean("road_always_show_speed", false)
+
     /** "voice", "beep" or "off". */
     fun roadAlertSound(context: Context): String =
         prefs(context).getString("road_alert_sound", "voice") ?: "voice"

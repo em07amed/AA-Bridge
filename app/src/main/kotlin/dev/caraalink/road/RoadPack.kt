@@ -3,6 +3,7 @@ package dev.caraalink.road
 import java.io.BufferedInputStream
 import java.io.Closeable
 import java.io.DataInputStream
+import java.io.EOFException
 import java.io.File
 import java.io.IOException
 import java.util.zip.ZipFile
@@ -88,7 +89,18 @@ class RoadPackReader(file: File) : Closeable {
             }
             tiles[row to col] = roads
         }
-        return PackChunk(tiles, cameras)
+        // Speed bumps were added at the end of the chunk; packs built before them stop here.
+        val bumps = try {
+            List(input.readInt()) {
+                val id = input.readLong()
+                val lat = input.readInt() / UNIT
+                val lon = input.readInt() / UNIT
+                SpeedCamera(id, LatLon(lat, lon), null, null, bump = true)
+            }
+        } catch (_: EOFException) {
+            emptyList()
+        }
+        return PackChunk(tiles, cameras + bumps)
     }
 
     private companion object {

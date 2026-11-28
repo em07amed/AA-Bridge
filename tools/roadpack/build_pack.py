@@ -18,6 +18,10 @@ Chunk format "c/<cy>_<cx>.bin", big-endian (java.io.DataInputStream):
         i64 way id, u8 flags (1 = one-way, points in travel order), u8 forward limit, u8 backward limit,
         u16 highway, u16 zone, u16 name, u16 name:ar, u16 name:en, u16 ref (string index, 0xFFFF none),
         u16 points, i32 lat0, i32 lon0, then (points-1) x (i16 dlat, i16 dlon)
+    u32 bumps, each: i64 id, i32 lat, i32 lon (speed bumps and other traffic calming)
+
+The bumps come last so readers that predate them (which stop after the tiles)
+still read newer packs.
 """
 
 import datetime
@@ -43,6 +47,8 @@ MARGIN = 30             # ~33 m around each tile, so matching near an edge finds
 MAX_SEG = 400           # split segments longer than ~440 m so each touches only a few tiles
 SIMPLIFY_M = 2.0        # Douglas-Peucker tolerance
 NONE = 0xFFFF
+# traffic_calming values a driver has to slow down for (not islands, chokers or chicanes).
+BUMPS = {"yes", "bump", "hump", "table", "cushion", "dip", "rumble_strip", "speed_bump"}
 
 CARDINAL = {"N": 0, "NNE": 22, "NE": 45, "ENE": 67, "E": 90, "ESE": 112, "SE": 135, "SSE": 157, "S": 180,
             "SSW": 202, "SW": 225, "WSW": 247, "W": 270, "WNW": 292, "NW": 315, "NNW": 337}
@@ -124,6 +130,7 @@ class Collector(osmium.SimpleHandler):
         super().__init__()
         self.ways = []
         self.cameras = []
+        self.bumps = []
 
     def way(self, w):
         hw = w.tags.get("highway")
@@ -153,7 +160,12 @@ class Collector(osmium.SimpleHandler):
                           bmp(t.get("name")), bmp(t.get("name:ar")), bmp(t.get("name:en")), bmp(t.get("ref")), pts))
 
     def node(self, n):
-        if n.tags.get("highway") != "speed_camera" or not n.location.valid():
+        if not n.location.valid():
+            return
+        if n.tags.get("traffic_calming") in BUMPS:
+            self.bumps.append((n.id, round(n.location.lat * UNIT), round(n.location.lon * UNIT)))
+            return
+        if n.tags.get("highway") != "speed_camera":
             return
         self.cameras.append((n.id, round(n.location.lat * UNIT), round(n.location.lon * UNIT),
                              parse_maxspeed(n.tags.get("maxspeed")) or 0,
@@ -163,7 +175,7 @@ class Collector(osmium.SimpleHandler):
 def build(src, dst):
     c = Collector()
     c.apply_file(src, locations=True, idx="flex_mem")
-    print(f"read {len(c.ways)} roads, {len(c.cameras)} cameras", flush=True)
+    print(f"read {len(c.ways)} roads, {len(c.cameras)} cameras, {len(c.bumps)} bumps", flush=True)
 
     # chunk -> tile -> pieces
     chunks = defaultdict(lambda: defaultdict(list))
@@ -201,15 +213,20 @@ def build(src, dst):
     cams = defaultdict(list)
     for cam in c.cameras:
         cams[(cam[1] // (TILE * CHUNK_TILES), cam[2] // (TILE * CHUNK_TILES))].append(cam)
+    bumps = defaultdict(list)
+    for b in c.bumps:
+        bumps[(b[1] // (TILE * CHUNK_TILES), b[2] // (TILE * CHUNK_TILES))].append(b)
+    keys = set(chunks) | set(cams) | set(bumps)
 
     with zipfile.ZipFile(dst, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
-        for key in sorted(set(chunks) | set(cams)):
-            z.writestr(f"c/{key[0]}_{key[1]}.bin", encode_chunk(chunks.get(key, {}), cams.get(key, [])))
+        for key in sorted(keys):
+            z.writestr(f"c/{key[0]}_{key[1]}.bin",
+                       encode_chunk(chunks.get(key, {}), cams.get(key, []), bumps.get(key, [])))
         meta = {
             "format": 1,
             "version": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d"),
             "source": "OpenStreetMap contributors (ODbL), extract by Geofabrik",
-            "roads": len(c.ways), "cameras": len(c.cameras), "chunks": len(set(chunks) | set(cams)),
+            "roads": len(c.ways), "cameras": len(c.cameras), "bumps": len(c.bumps), "chunks": len(keys),
             "bounds": [lat_min / UNIT, lon_min / UNIT, lat_max / UNIT, lon_max / UNIT],
         }
         z.writestr("meta.json", json.dumps(meta, ensure_ascii=False))
@@ -217,7 +234,7 @@ def build(src, dst):
     return meta
 
 
-def encode_chunk(tiles, cameras):
+def encode_chunk(tiles, cameras, bumps=()):
     strings, index = [], {}
 
     def sid(s):
@@ -244,6 +261,9 @@ def encode_chunk(tiles, cameras):
             w(struct.pack(">Hii", len(pts), pts[0][0], pts[0][1]))
             for (a, b), (c_, d) in zip(pts, pts[1:]):
                 w(struct.pack(">hh", c_ - a, d - b))
+    w(struct.pack(">I", len(bumps)))
+    for (bid, la, lo) in bumps:
+        w(struct.pack(">qii", bid, la, lo))
 
     head = io.BytesIO()
     head.write(b"DBR1")

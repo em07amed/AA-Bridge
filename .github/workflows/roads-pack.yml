@@ -46,7 +46,7 @@ jobs:
         run: |
           osmium tags-filter egypt.osm.pbf \
             w/highway=motorway,trunk,primary,secondary,tertiary,unclassified,residential,living_street,motorway_link,trunk_link,primary_link,secondary_link,tertiary_link \
-            n/highway=speed_camera \
+            n/highway=speed_camera n/traffic_calming \
             -o roads.osm.pbf --overwrite
           ls -l roads.osm.pbf
 

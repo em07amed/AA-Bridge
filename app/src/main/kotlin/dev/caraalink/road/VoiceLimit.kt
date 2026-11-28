@@ -11,9 +11,11 @@ import android.speech.SpeechRecognizer
 import dev.caraalink.R
 
 /**
- * Tap the limit sign on the car screen, say the limit ("ستين", "80",
- * "مية وعشرين", or "امسح" to forget it), and it is saved for the road under
- * the car -- for roads OpenStreetMap has no limit for, or has wrong.
+ * Tap the limit sign on the car screen and say:
+ *  - the limit ("ستين", "80", "مية وعشرين", or "امسح" to forget it): saved for
+ *    the road under the car -- for roads OpenStreetMap has no limit for, or has wrong;
+ *  - "رادار" (or "رادار ستين"): a speed camera here; "شيل الرادار" removes the next one;
+ *  - "مطب": a speed bump here.
  * Uses the phone's speech recognizer; call from the main thread.
  */
 object VoiceLimit {
@@ -33,7 +35,12 @@ object VoiceLimit {
         r.setRecognitionListener(object : RecognitionListener {
             override fun onResults(results: Bundle?) {
                 val said = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION).orEmpty()
+                val camera = said.firstOrNull { RoadMath.isCameraCommand(it) }
                 when {
+                    camera != null ->
+                        if (RoadMath.isClearCommand(camera)) RoadAlerts.removeNextCamera()
+                        else RoadAlerts.addCameraHere(RoadMath.parseSpokenLimit(camera))
+                    said.any { RoadMath.isBumpCommand(it) } -> RoadAlerts.addBumpHere()
                     said.any { RoadMath.isClearCommand(it) } -> RoadAlerts.setUserLimit(null)
                     else -> {
                         val limit = said.firstNotNullOfOrNull { RoadMath.parseSpokenLimit(it) }

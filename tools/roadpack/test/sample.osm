@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <osm version="0.6" generator="test">
   <node id="1" lat="31.0400" lon="31.3700" version="1"/>
-  <node id="2" lat="31.0400" lon="31.3800" version="1"/>
+  <node id="2" lat="31.0400" lon="31.3800" version="1">
+    <tag k="traffic_calming" v="bump"/>
+  </node>
   <node id="3" lat="31.0400" lon="31.4100" version="1"/>
   <node id="4" lat="31.0450" lon="31.3750" version="1"/>
   <node id="5" lat="31.0350" lon="31.3750" version="1"/>
@@ -9,6 +11,12 @@
     <tag k="highway" v="speed_camera"/>
     <tag k="maxspeed" v="60"/>
     <tag k="direction" v="E"/>
+  </node>
+  <node id="7" lat="31.0420" lon="31.3760" version="1">
+    <tag k="traffic_calming" v="island"/>
+  </node>
+  <node id="8" lat="31.0430" lon="31.3755" version="1">
+    <tag k="traffic_calming" v="hump"/>
   </node>
   <way id="100" version="1">
     <nd ref="1"/><nd ref="2"/><nd ref="3"/>

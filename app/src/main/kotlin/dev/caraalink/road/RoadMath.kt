@@ -18,6 +18,8 @@ class SpeedCamera(
     val limit: Int?,
     /** Direction of travel the camera watches, in degrees, when known. */
     val heading: Double?,
+    /** A speed bump (OSM traffic_calming), not a camera: warned about by distance, no limit. */
+    val bump: Boolean = false,
 ) {
     var farSaid = false
     var nearSaid = false
@@ -72,8 +74,15 @@ object RoadMath {
         "[out:json][timeout:25];way(${bbox(s, w, n, e)})[\"highway\"~\"^(motorway|trunk|primary|secondary|tertiary|" +
             "unclassified|residential|living_street)(_link)?$\"];out tags geom;"
 
-    fun camerasQuery(s: Double, w: Double, n: Double, e: Double): String =
-        "[out:json][timeout:25];node(${bbox(s, w, n, e)})[\"highway\"=\"speed_camera\"];out;"
+    /** Speed cameras and speed bumps. */
+    fun camerasQuery(s: Double, w: Double, n: Double, e: Double): String {
+        val b = bbox(s, w, n, e)
+        return "[out:json][timeout:25];(node($b)[\"highway\"=\"speed_camera\"];" +
+            "node($b)[\"traffic_calming\"~\"^(${BUMPS.joinToString("|")})$\"];);out;"
+    }
+
+    /** OSM traffic_calming values a driver slows down for (not islands, chokers or chicanes). Same list as build_pack.py. */
+    val BUMPS = setOf("yes", "bump", "hump", "table", "cushion", "dip", "rumble_strip", "speed_bump")
 
     /** "60", "60 km/h", "40 mph" → km/h; anything without a number ("EG:urban", "none") → null. */
     fun parseMaxspeed(v: String?): Int? {
@@ -225,6 +234,18 @@ object RoadMath {
         val tens = TENS.entries.firstOrNull { t.contains(it.key) }?.value ?: 0
         val v = (if (hundred) 100 else 0) + tens
         return v.takeIf { it in 20..140 }
+    }
+
+    /** "رادار" / "كاميرا" (optionally with its limit, "رادار ستين"): a speed camera right here. */
+    fun isCameraCommand(text: String): Boolean {
+        val t = normalizeName(text)
+        return listOf("رادار", "ردار", "كاميرا", "كاميره", "radar", "camera").any { t.contains(it) }
+    }
+
+    /** "مطب": a speed bump right here. */
+    fun isBumpCommand(text: String): Boolean {
+        val t = normalizeName(text)
+        return listOf("مطب", "bump").any { t.contains(it) }
     }
 
     /** "امسح", "الغي", "clear": forget the driver's limit for this road. */

@@ -111,7 +111,14 @@
     <string name="road_manual_limit_title">الحد لما الطريق مش معروف</string>
     <string name="road_tolerance_title">ينبّه لما تعدّي الحد بـ</string>
     <string name="road_camera_alerts_title">تنبيه الرادارات</string>
-    <string name="road_camera_alerts_summary">قبل الرادار بـ 600 متر. على شاشة العربية: دوس مطوّل على السرعة عشان تسجّل رادار، أو على شريط الرادار عشان تشيل رادار غلط.</string>
+    <string name="road_camera_alerts_summary">قبل الرادار بـ 600 متر. على شاشة العربية: دوس على علامة الحد وقول \"رادار\" (أو \"رادار ستين\") عشان تسجّل رادار، ودوس مطوّل على شريط الرادار عشان تشيل رادار غلط.</string>
+    <string name="road_bump_alerts_title">تنبيه المطبات</string>
+    <string name="road_bump_alerts_summary">قبل المطب بكام ثانية، من OpenStreetMap. دوس على علامة الحد وقول \"مطب\" عشان تسجّل مطب مكانك.</string>
+    <string name="road_always_show_speed_title">اعرض سرعتي على طول</string>
+    <string name="road_always_show_speed_summary">لو مقفول: السرعة تظهر بس لما تعدّي الحد، عشان خرائط جوجل بتعرضها. دوس مطوّل على علامة الحد عشان تكتم الصوت.</string>
+    <string name="road_bump_banner">⚠️ مطب %1$d م</string>
+    <string name="road_say_bump">مطب بعد %1$d متر.</string>
+    <string name="road_note_bump_added">اتسجّل مطب هنا</string>
     <string name="road_alert_sound_title">صوت التنبيه</string>
     <string name="road_overlay_title">اعرض السرعة على شاشة العربية</string>
     <string name="road_overlay_summary">السرعة والحد وأقرب رادار فوق Android Auto. دوس على السرعة تكتم الصوت، ودوس على علامة الحد وقول رقم تحدد حد الطريق.</string>
@@ -134,7 +141,7 @@
     <string name="road_corner_bottom_right">تحت يمين</string>
     <string name="road_corner_bottom_left">تحت شمال</string>
     <string name="road_kmh_value">%1$d كم/س</string>
-    <string name="road_voice_prompt">قول الحد…</string>
+    <string name="road_voice_prompt">قول الحد، أو \"رادار\"، أو \"مطب\"…</string>
     <string name="road_voice_saved">الحد %1$d اتسجّل للطريق ده</string>
     <string name="road_voice_cleared">اتشال الحد بتاعك للطريق ده</string>
     <string name="road_voice_not_understood">مسمعتش رقم. دوس على العلامة وجرّب تاني</string>

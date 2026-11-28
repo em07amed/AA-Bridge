@@ -191,4 +191,39 @@ class RoadMathTest {
         assertTrue(RoadMath.isClearCommand("امسح الحد"))
         assertFalse(RoadMath.isClearCommand("ستين"))
     }
+
+    @Test
+    fun voiceCommandsForCamerasAndBumps() {
+        assertTrue(RoadMath.isCameraCommand("رادار"))
+        assertTrue(RoadMath.isCameraCommand("فيه رادار هنا"))
+        assertTrue(RoadMath.isCameraCommand("كاميرا"))
+        assertEquals(60, RoadMath.parseSpokenLimit("رادار ستين"))
+        assertNull(RoadMath.parseSpokenLimit("رادار"))
+        assertTrue(RoadMath.isClearCommand("شيل الرادار"))
+        assertTrue(RoadMath.isBumpCommand("مطب"))
+        assertTrue(RoadMath.isBumpCommand("في مطب"))
+        assertFalse(RoadMath.isBumpCommand("ستين"))
+        assertFalse(RoadMath.isCameraCommand("مطب"))
+    }
+
+    @Test
+    fun camerasQueryAsksForBumpsToo() {
+        val q = RoadMath.camerasQuery(31.0, 31.3, 31.1, 31.4)
+        assertTrue(q.contains("speed_camera"))
+        assertTrue(q.contains("traffic_calming"))
+        assertTrue(q.contains("hump"))
+        assertFalse(q.contains("island"))
+    }
+
+    @Test
+    fun bumpAheadOnOurLineOnly() {
+        val at = LatLon(31.0400, 31.3700)
+        // Heading east; one bump 100 m ahead on our line, one behind, one 100 m off to the side.
+        val ahead = SpeedCamera(1, LatLon(31.0400, 31.37105), null, null, bump = true)
+        val behind = SpeedCamera(2, LatLon(31.0400, 31.36895), null, null, bump = true)
+        val side = SpeedCamera(3, LatLon(31.0409, 31.37105), null, null, bump = true)
+        val hit = RoadMath.cameraAhead(listOf(behind, side, ahead), at, 90.0, true)
+        assertEquals(1L, hit!!.camera.id)
+        assertEquals(100.0, hit.meters, 5.0)
+    }
 }

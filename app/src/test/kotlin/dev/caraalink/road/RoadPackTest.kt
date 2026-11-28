@@ -37,7 +37,7 @@ class RoadPackTest {
             assertEquals(40, street.estimate) // Mansoura city street
 
             assertTrue(chunk.tiles.values.flatten().none { it.id == 300L }) // footway left out
-            val cam = chunk.cameras.single()
+            val cam = chunk.cameras.single { !it.bump }
             assertEquals(60, cam.limit)
             assertEquals(90.0, cam.heading!!, 0.001)
 
@@ -45,6 +45,27 @@ class RoadPackTest {
             val m = RoadMath.matchRoad(roads, LatLon(31.04003, 31.3760), 270.0)
             assertNotNull(m)
             assertEquals(100L, m!!.road.id)
+        }
+    }
+
+    @Test
+    fun readsBumpsButNotIslands() {
+        RoadPackReader(sample()).use { pack ->
+            val bumps = pack.chunk(620, 627).cameras.filter { it.bump }
+            // Node 2 sits on the Dekernes road, node 8 stands alone; node 7 is an island.
+            assertEquals(setOf(2L, 8L), bumps.map { it.id }.toSet())
+            assertTrue(bumps.all { it.limit == null && it.heading == null })
+        }
+    }
+
+    @Test
+    fun readsPacksBuiltBeforeBumps() {
+        val url = javaClass.classLoader!!.getResource("roadpack/sample-v1.zip")
+        RoadPackReader(File(url.toURI())).use { pack ->
+            val chunk = pack.chunk(620, 627)
+            assertEquals(1, chunk.cameras.size)
+            assertTrue(chunk.cameras.none { it.bump })
+            assertTrue(chunk.tiles.isNotEmpty())
         }
     }
 
