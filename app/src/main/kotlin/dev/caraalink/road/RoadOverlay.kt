@@ -121,8 +121,8 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
         radar.layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
             .apply { bottomMargin = gap }
 
-        place.setTextSize(TypedValue.COMPLEX_UNIT_PX, u * 3.5f)
-        place.setPadding(gap + gap / 2, gap / 2, gap + gap / 2, gap / 2)
+        place.setTextSize(TypedValue.COMPLEX_UNIT_PX, u * 4.5f)
+        place.setPadding(gap * 2, gap, gap * 2, gap)
         place.layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
             .apply { bottomMargin = gap }
         place.background = rounded(DARK)
