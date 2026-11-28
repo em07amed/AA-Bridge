@@ -307,6 +307,49 @@ object RoadMath {
      * we drive, so a parallel service road or a crossing street doesn't win.
      * [heading] is NaN when unknown (stopped), and then distance alone decides.
      */
+    /** The point [m] metres from [p] towards [bearingDeg] (flat-earth, fine for a few km). */
+    fun offset(p: LatLon, bearingDeg: Double, m: Double): LatLon {
+        val b = Math.toRadians(bearingDeg)
+        val dLat = m * cos(b) / 111_320.0
+        val dLon = m * sin(b) / (111_320.0 * cos(Math.toRadians(p.lat)))
+        return LatLon(p.lat + dLat, p.lon + dLon)
+    }
+
+    /**
+     * Points [distances] metres ahead of [at] along [road] in the direction of
+     * [heading], each with the direction of travel there. Past the end of the
+     * road the line carries on straight, which is where the next road starts.
+     */
+    fun pointsAhead(road: Road, at: LatLon, heading: Double, distances: List<Double>): List<Pair<LatLon, Double>> {
+        val pts = road.pts
+        if (pts.size < 2 || distances.isEmpty()) return emptyList()
+        var seg = 1
+        var best = Double.MAX_VALUE
+        for (i in 1 until pts.size) {
+            val d = toSegmentM(at, pts[i - 1], pts[i])
+            if (d < best) { best = d; seg = i }
+        }
+        val forward = heading.isNaN() || abs(angleDiff(heading, bearing(pts[seg - 1], pts[seg]))) <= 90
+        val path = if (forward) pts.subList(seg, pts.size) else pts.subList(0, seg).asReversed()
+        val out = ArrayList<Pair<LatLon, Double>>()
+        var cur = at
+        var walked = 0.0
+        var dir = if (forward) bearing(pts[seg - 1], pts[seg]) else bearing(pts[seg], pts[seg - 1])
+        var k = 0
+        for (target in distances.sorted()) {
+            while (k < path.size) {
+                val leg = distanceM(cur, path[k])
+                if (leg > 0.5) dir = bearing(cur, path[k])
+                if (walked + leg >= target) break
+                walked += leg
+                cur = path[k]
+                k++
+            }
+            out += offset(cur, dir, target - walked) to dir
+        }
+        return out
+    }
+
     fun matchRoad(roads: List<Road>, at: LatLon, heading: Double): RoadMatch? {
         val hasDir = !heading.isNaN()
         var best: RoadMatch? = null

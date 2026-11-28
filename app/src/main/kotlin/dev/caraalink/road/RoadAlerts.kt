@@ -60,6 +60,8 @@ data class RoadState(
     val cameraLimit: Int? = null,
     /** Metres to the next speed bump on our line, while it is close enough to warn about. */
     val bumpM: Int? = null,
+    /** Summary of the drive just finished, shown while parked. */
+    val trip: String? = null,
     val muted: Boolean = false,
     /** Short confirmation shown for a few seconds ("Camera saved here"). */
     val note: String? = null,
@@ -153,6 +155,10 @@ object RoadAlerts {
 
     private var next: CameraAhead? = null
     private var nextBump: CameraAhead? = null
+    private var trip: Trip? = null
+    private var tripCard: String? = null
+    /** Road and limit of the last lower-limit-ahead warning, so it is said once. */
+    private var aheadSaid: Pair<Long, Int>? = null
     private var speeding = false
     private var lastNag = 0L
     private var muted = false
@@ -195,6 +201,7 @@ object RoadAlerts {
         parked = null
         stillSince = 0L
         handler?.post {
+            finishTrip()
             stopGps()
             speeding = false
             next = null
@@ -326,6 +333,7 @@ object RoadAlerts {
         speedKmh = if (loc.hasSpeed()) loc.speed * 3.6 else null
         updateParked(speedKmh)
         if (loc.hasBearing() && loc.speed > 2f) heading = loc.bearing.toDouble()
+        trackTrip(at)
 
         ensureTiles(at)
         refreshPlace(at)
@@ -333,6 +341,7 @@ object RoadAlerts {
         matchRoad(at)
         val limit = currentLimit(ctx).limit
         checkSpeed(ctx, limit)
+        checkLimitAhead(ctx, at, limit)
         checkCameras(ctx, at, limit)
         checkBumps(ctx, at)
         publish()
@@ -426,6 +435,7 @@ object RoadAlerts {
         if (kmh > over) {
             if (!speeding) {
                 speeding = true
+                trip?.overLimit()
                 lastNag = now + 3_000 // let the sentence finish
                 say(vs(R.string.road_say_speeding, kmh.roundToInt(), limit))
             } else if (now - lastNag >= 8_000) {
@@ -453,6 +463,7 @@ object RoadAlerts {
         val camLimit = c.limit ?: limit
         if (!c.farSaid && hit.meters <= 600) {
             c.farSaid = true
+            trip?.camera()
             val m = (hit.meters / 50).roundToInt() * 50
             say(
                 if (camLimit != null) vs(R.string.road_say_camera_far, m, camLimit)
@@ -462,6 +473,64 @@ object RoadAlerts {
             c.nearSaid = true
             say(vs(R.string.road_say_camera_near, camLimit))
         }
+    }
+
+    // ---------- lower limit ahead ----------
+
+    /**
+     * Follows our road about 400 m ahead; where the next road has a lower
+     * limit and we are faster than it, says so once ("الحد هيبقى 60 بعد 300 متر").
+     */
+    private fun checkLimitAhead(ctx: Context, at: LatLon, limit: Int?) {
+        val r = road
+        val kmh = speedKmh ?: return
+        if (!AppSettings.roadLimitAheadAlerts(ctx) || r == null || limit == null || kmh < 25 || heading.isNaN()) return
+        for ((p, dir) in RoadMath.pointsAhead(r, at, heading, listOf(100.0, 200.0, 300.0, 400.0))) {
+            val m = RoadMath.matchRoad(roads, p, dir) ?: continue
+            if (m.road.id == r.id) continue
+            val next = userLimitFor(m.road)
+                ?: (if (AppSettings.roadUseOsmLimit(ctx)) m.limit ?: m.road.estimate else null)
+                ?: return
+            if (next >= limit || kmh <= next + AppSettings.roadTolerance(ctx)) return
+            val key = m.road.id to next
+            if (key == aheadSaid) return
+            aheadSaid = key
+            val meters = ((RoadMath.distanceM(at, p) / 50).roundToInt() * 50).coerceAtLeast(50)
+            say(vs(R.string.road_say_limit_ahead, next, meters))
+            showNoteText(ctx.getString(R.string.road_note_limit_ahead, next, meters), 6_000)
+            return
+        }
+    }
+
+    // ---------- trip summary and parking spot ----------
+
+    private fun trackTrip(at: LatLon) {
+        val kmh = speedKmh ?: return
+        val now = System.currentTimeMillis()
+        if (trip == null && kmh > 8) {
+            trip = Trip(now)
+            tripCard = null
+        }
+        if (kmh >= 2) trip?.add(at, kmh, now)
+        // Parked for two minutes, not just a long red light.
+        if (parked == true && stillSince != 0L && now - stillSince >= 120_000) finishTrip()
+    }
+
+    /** Saves where the car stopped and shows / notifies the summary. Also runs when the car is switched off. */
+    private fun finishTrip() {
+        val t = trip ?: return
+        trip = null
+        val ctx = app ?: return
+        val at = last
+        if (at != null) TripNotifier.saveParking(ctx, at, System.currentTimeMillis())
+        logger?.log("trip done: ${t.meters.roundToInt()} m, ${t.minutes} min, max ${t.maxKmh.roundToInt()}, over ${t.overCount}")
+        if (!t.worthSummary || !AppSettings.roadTripSummary(ctx)) return
+        val text = ctx.getString(
+            R.string.road_trip_summary, Trip.km(t.meters), Trip.duration(t.minutes), t.maxKmh.roundToInt(), t.overCount,
+        )
+        tripCard = text
+        runCatching { TripNotifier.notify(ctx, text, at) }.onFailure { logger?.log("trip notification failed: $it") }
+        publish()
     }
 
     // ---------- speed bumps ----------
@@ -918,10 +987,14 @@ object RoadAlerts {
     // ---------- state ----------
 
     private fun showNote(@StringRes res: Int) {
-        note = app?.getString(res)
-        noteUntil = System.currentTimeMillis() + 3_000
+        app?.getString(res)?.let { showNoteText(it, 3_000) }
+    }
+
+    private fun showNoteText(text: String, ms: Long) {
+        note = text
+        noteUntil = System.currentTimeMillis() + ms
         publish()
-        handler?.postDelayed({ publish() }, 3_100)
+        handler?.postDelayed({ publish() }, ms + 100)
     }
 
     private fun publish() {
@@ -944,6 +1017,7 @@ object RoadAlerts {
             cameraM = cam?.meters?.roundToInt(),
             cameraLimit = cam?.camera?.limit ?: cam?.let { limit },
             bumpM = nextBump?.meters?.roundToInt(),
+            trip = tripCard.takeIf { parked == true },
             muted = muted,
             note = note?.takeIf { System.currentTimeMillis() < noteUntil },
         )

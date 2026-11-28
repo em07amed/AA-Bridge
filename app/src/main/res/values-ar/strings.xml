@@ -155,4 +155,17 @@
     <string name="road_pack_missing">لسه مش متحمّلة. بتتحمّل لوحدها على الواي فاي، أو دوس هنا تحمّلها دلوقتي.</string>
     <string name="road_pack_downloading">بيتحمّل… %1$d%%</string>
     <string name="road_pack_error">آخر محاولة فشلت: %1$s</string>
+    <string name="road_limit_ahead_title">تنبيه قبل الحد الأقل</string>
+    <string name="road_limit_ahead_summary">لما الطريق اللي جاي حده أقل وانت أسرع منه: \"الحد هيبقى 60 بعد 300 متر\".</string>
+    <string name="road_say_limit_ahead">الحد هيبقى %1$d بعد %2$d متر.</string>
+    <string name="road_note_limit_ahead">⬇ %1$d بعد %2$d م</string>
+    <string name="road_trip_summary_title">ملخص المشوار</string>
+    <string name="road_trip_summary_summary">بعد ما تركن بدقيقتين، أو لما تطفي العربية: المسافة، والوقت، وأعلى سرعة، وكام مرة عدّيت الحد، على شاشة العربية وفي إشعار على الموبايل.</string>
+    <string name="road_trip_summary">🏁 %1$s كم • %2$s د • أعلى سرعة %3$d • عدّيت الحد %4$d مرة</string>
+    <string name="road_trip_title">المشوار خلص</string>
+    <string name="road_trip_channel">ملخص المشوار</string>
+    <string name="road_park_here">مكان العربية</string>
+    <string name="road_parking_title">مكان الركنة</string>
+    <string name="road_parking_summary">ركنت %1$s. دوس عشان تفتحه على الخريطة.</string>
+    <string name="road_parking_none">لسه مفيش. بيتسجّل لوحده لما تركن.</string>
 </resources>

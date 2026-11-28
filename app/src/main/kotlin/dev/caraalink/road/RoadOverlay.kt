@@ -162,7 +162,7 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
             sign.text = limit?.toString() ?: "?"
             sign.background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
-                setColor(Color.WHITE)
+                setColor(if (isNight()) NIGHT_SIGN else Color.WHITE)
                 setStroke(
                     (u * 1.2f).toInt().coerceAtLeast(2),
                     when {
@@ -198,8 +198,14 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
         place.visibility = if (placeText.isNotEmpty()) View.VISIBLE else View.GONE
         place.text = placeText
 
-        note.visibility = if (s.note != null) View.VISIBLE else View.GONE
-        note.text = s.note ?: ""
+        // A note after an action wins; otherwise the summary of the drive while parked.
+        val noteText = s.note ?: s.trip
+        note.visibility = if (noteText != null) View.VISIBLE else View.GONE
+        note.text = noteText ?: ""
+
+        // At night everything is a little dimmer, and the sign is not glaring white.
+        val night = isNight()
+        column.alpha = if (night) 0.8f else 1f
 
         column.visibility =
             if (row.visibility == View.VISIBLE || radar.visibility == View.VISIBLE || bump.visibility == View.VISIBLE ||
@@ -209,7 +215,21 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
             else View.GONE
     }
 
+    private var nightAt = 0L
+    private var night = false
+
+    /** Same sun-based day/night as Android Auto's night mode; looked up at most once a minute. */
+    private fun isNight(): Boolean {
+        val now = System.currentTimeMillis()
+        if (now - nightAt > 60_000) {
+            nightAt = now
+            night = runCatching { dev.caraalink.aa.NightMode.current(context) }.getOrNull() ?: false
+        }
+        return night
+    }
+
     private companion object {
+        val NIGHT_SIGN = 0xFFC8C8C8.toInt()
         val RED = 0xFFE53935.toInt()
         val GREY = 0xFF9E9E9E.toInt()
         val ORANGE = 0xFFFB8C00.toInt()

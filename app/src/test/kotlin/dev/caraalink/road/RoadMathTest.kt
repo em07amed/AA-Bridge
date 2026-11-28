@@ -226,4 +226,62 @@ class RoadMathTest {
         assertEquals(1L, hit!!.camera.id)
         assertEquals(100.0, hit.meters, 5.0)
     }
+
+    private fun road(id: Long, vararg pts: LatLon, fwd: Int? = null) =
+        Road(id, pts.toList(), fwd, fwd, false, null, null)
+
+    @Test
+    fun pointsAheadFollowTheRoadThenCarryOn() {
+        // East for ~200 m, then north for ~200 m.
+        val corner = LatLon(31.0400, 31.3721)
+        val r = road(1, LatLon(31.0400, 31.3700), corner, LatLon(31.0418, 31.3721))
+        val at = LatLon(31.0400, 31.3700)
+        val ahead = RoadMath.pointsAhead(r, at, 90.0, listOf(100.0, 300.0, 500.0))
+        assertEquals(3, ahead.size)
+        // 100 m: still heading east, on the first leg.
+        assertEquals(100.0, RoadMath.distanceM(at, ahead[0].first), 3.0)
+        assertEquals(90.0, ahead[0].second, 2.0)
+        // 300 m: ~100 m up the second leg, heading north.
+        assertEquals(100.0, RoadMath.distanceM(corner, ahead[1].first), 5.0)
+        assertTrue(kotlin.math.abs(RoadMath.angleDiff(ahead[1].second, 0.0)) < 2)
+        // 500 m: past the end of the road, still north.
+        assertTrue(ahead[2].first.lat > 31.0418)
+    }
+
+    @Test
+    fun pointsAheadGoTheOtherWayWhenDrivingBackwards() {
+        val r = road(1, LatLon(31.0400, 31.3700), LatLon(31.0400, 31.3721))
+        val at = LatLon(31.0400, 31.3715)
+        val p = RoadMath.pointsAhead(r, at, 270.0, listOf(100.0)).single()
+        assertTrue(p.first.lon < at.lon)
+        assertEquals(270.0, (p.second + 360) % 360, 2.0)
+    }
+
+    @Test
+    fun lowerLimitAheadIsTheNextRoad() {
+        // Our road (90) runs east and ends; the next road (60) carries on east.
+        val ours = road(1, LatLon(31.0400, 31.3700), LatLon(31.0400, 31.3721), fwd = 90)
+        val next = road(2, LatLon(31.0400, 31.3721), LatLon(31.0400, 31.3760), fwd = 60)
+        val at = LatLon(31.0400, 31.3705)
+        val hits = RoadMath.pointsAhead(ours, at, 90.0, listOf(100.0, 200.0, 300.0))
+            .mapNotNull { (p, dir) -> RoadMath.matchRoad(listOf(ours, next), p, dir) }
+        assertEquals(2L, hits.last().road.id)
+        assertEquals(60, hits.last().limit)
+    }
+
+    @Test
+    fun tripCountsDistanceButNotJumps() {
+        val t = Trip(0)
+        t.add(LatLon(31.0400, 31.3700), 50.0, 1_000)
+        t.add(LatLon(31.0400, 31.3710), 60.0, 7_000) // ~95 m in 6 s
+        t.add(LatLon(31.1400, 31.3710), 60.0, 8_000) // 11 km in 1 s: a bad fix
+        t.overLimit()
+        assertEquals(95.0, t.meters, 5.0)
+        assertEquals(60.0, t.maxKmh, 0.01)
+        assertEquals(1, t.overCount)
+        assertFalse(t.worthSummary)
+        assertEquals("12.4", Trip.km(12_400.0))
+        assertEquals("25", Trip.duration(25))
+        assertEquals("1:05", Trip.duration(65))
+    }
 }

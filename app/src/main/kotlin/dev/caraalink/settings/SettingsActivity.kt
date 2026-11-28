@@ -58,6 +58,20 @@ class SettingsActivity : AppCompatActivity() {
                 startActivity(Intent(requireContext(), dev.caraalink.diagnostics.DeveloperToolsActivity::class.java))
                 true
             }
+            findPreference<Preference>("road_parking")?.let { pref ->
+                val app = requireContext().applicationContext
+                val spot = dev.caraalink.road.TripNotifier.parking(app)
+                pref.summary = if (spot == null) getString(dev.caraalink.R.string.road_parking_none)
+                else getString(
+                    dev.caraalink.R.string.road_parking_summary,
+                    android.text.format.DateUtils.getRelativeTimeSpanString(spot.time).toString(),
+                )
+                pref.setOnPreferenceClickListener {
+                    val s = dev.caraalink.road.TripNotifier.parking(app) ?: return@setOnPreferenceClickListener true
+                    runCatching { startActivity(dev.caraalink.road.TripNotifier.mapsIntent(app, s.at)) }
+                    true
+                }
+            }
             findPreference<Preference>("car_profiles")?.setOnPreferenceClickListener {
                 showCarProfilesDialog()
                 true
