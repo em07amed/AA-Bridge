@@ -5,9 +5,6 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
-import android.text.SpannableStringBuilder
-import android.text.Spanned
-import android.text.style.RelativeSizeSpan
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
@@ -18,12 +15,12 @@ import dev.caraalink.R
 import dev.caraalink.settings.AppSettings
 
 /**
- * Drawn over Android Auto on the car screen: a limit sign, your speed (only
- * when over the limit, red), the next camera or speed bump, and a short note
+ * Drawn over Android Auto on the car screen: a limit sign (green ring, orange
+ * when over the limit, red when well over), the next camera or speed bump, and a short note
  * after an action. It sits in the same view tree that is encoded to the car,
  * so it needs no help from Android Auto. Only the badges take touches -- tap
- * the sign and speak, long-press it to mute, long-press the speed to save a
- * camera here, long-press the camera banner to remove it.
+ * the sign and speak, long-press it to mute, long-press the camera banner
+ * to remove it.
  * Everywhere else, touches fall through to Android Auto.
  */
 @SuppressLint("ViewConstructor")
@@ -156,9 +153,8 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
         last = s
         val u = unit
 
-        // Limit sign: blue ring = set by the driver by voice, red = signed on this road
-        // (OpenStreetMap), orange = announced/legal default, grey = manual fallback or "?".
-        // No limit known on a matched road: a "?" sign to tap and say it.
+        // Limit sign: white with a green ring; orange when over the limit, red when well over.
+        // No limit known on a matched road: a "?" sign (grey ring) to tap and say it.
         val limit = s.limit
         val ask = limit == null && s.onRoad
         sign.visibility = if ((limit != null || ask) && s.speedKmh != null) View.VISIBLE else View.GONE
@@ -168,31 +164,22 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
                 shape = GradientDrawable.OVAL
                 setColor(Color.WHITE)
                 setStroke(
-                    (u * 1f).toInt().coerceAtLeast(2),
+                    (u * 1.2f).toInt().coerceAtLeast(2),
                     when {
-                        s.limitFromUser -> BLUE
-                        s.limitFromRoad -> RED
-                        s.limitEstimated -> ORANGE
-                        else -> GREY
+                        limit == null -> GREY
+                        s.wayOver -> RED
+                        s.over -> ORANGE
+                        else -> GREEN
                     },
                 )
             }
         }
 
-        val kmh = s.speedKmh
-        row.visibility = if (kmh != null) View.VISIBLE else View.GONE
-        // Google Maps shows the speed already: ours only when over the limit or muted, unless asked always.
-        speed.visibility =
-            if (kmh != null && (s.over || s.muted || AppSettings.roadAlwaysShowSpeed(context))) View.VISIBLE else View.GONE
-        if (kmh != null) {
-            val text = SpannableStringBuilder(kmh.toString())
-            val unitText = "\n" + context.getString(R.string.road_kmh) + if (s.muted) " 🔇" else ""
-            val from = text.length
-            text.append(unitText)
-            text.setSpan(RelativeSizeSpan(0.38f), from, text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-            speed.text = text
-            speed.background = rounded(if (s.over) RED else DARK)
-        }
+        // No speed on the overlay (Google Maps shows it); this badge only says the alerts are muted.
+        row.visibility = if (s.speedKmh != null) View.VISIBLE else View.GONE
+        speed.visibility = if (s.speedKmh != null && s.muted) View.VISIBLE else View.GONE
+        speed.text = "🔇"
+        speed.background = rounded(DARK)
 
         val cam = s.cameraM
         radar.visibility = if (cam != null && cam <= 1000) View.VISIBLE else View.GONE
@@ -227,6 +214,7 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
         val GREY = 0xFF9E9E9E.toInt()
         val ORANGE = 0xFFFB8C00.toInt()
         val BLUE = 0xFF1E88E5.toInt()
+        val GREEN = 0xFF43A047.toInt()
         val DARK = 0xCC111111.toInt()
     }
 }

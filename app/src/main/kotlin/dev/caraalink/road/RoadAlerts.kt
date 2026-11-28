@@ -53,6 +53,8 @@ data class RoadState(
     val tempC: Int? = null,
     val city: String? = null,
     val over: Boolean = false,
+    /** Well over: 20 km/h or 20 % above the limit, whichever is more. */
+    val wayOver: Boolean = false,
     /** Metres to the next camera on our line, when one is within 1 km. */
     val cameraM: Int? = null,
     val cameraLimit: Int? = null,
@@ -938,6 +940,7 @@ object RoadAlerts {
             tempC = tempC.takeIf { AppSettings.roadShowWeather(ctx) },
             city = city.takeIf { AppSettings.roadShowWeather(ctx) },
             over = kmh != null && limit != null && kmh > limit + AppSettings.roadTolerance(ctx),
+            wayOver = kmh != null && limit != null && kmh >= limit + maxOf(20.0, limit * 0.2),
             cameraM = cam?.meters?.roundToInt(),
             cameraLimit = cam?.camera?.limit ?: cam?.let { limit },
             bumpM = nextBump?.meters?.roundToInt(),

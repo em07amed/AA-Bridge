@@ -13,10 +13,11 @@
   - "مطب": يتسجّل مطب في مكانك.
 - لسه تقدر تقول الحد ("ستين") أو "امسح" زي الأول.
 
-**🧹 السرعة مش متكررة**
-- خرائط جوجل بتعرض سرعتك تحت، فالسرعة بتاعتنا بقت تظهر بس لما تعدّي الحد، باللون الأحمر.
-- لو عايزها تظهر على طول، شغّل "اعرض سرعتي على طول" من الإعدادات.
-- عشان تكتم الصوت، دوس مطوّل على علامة الحد.
+**🟢 علامة الحد بتتلوّن على حسب سرعتك**
+- العلامة بيضا وحواليها حلقة خضرا طول ما انت ماشي في الحد.
+- برتقالي لما تعدّي الحد، وأحمر لما تعدّيه بكتير (20 كم/س أو 20% فوق الحد، أيهما أكبر).
+- سرعة الـ GPS اتشالت من الشاشة، لأن خرائط جوجل بتعرضها.
+- عشان تكتم الصوت دوس مطوّل على العلامة، وهيظهر 🔇 تحتها طول ما الصوت مكتوم.
 
 ---
 
@@ -24,4 +25,4 @@
 
 - **Speed bump alerts:** about 7 s before a bump ("Speed bump in 100 metres") with an orange banner, once per row of bumps. Bumps come from OpenStreetMap in the offline pack. Toggle in settings.
 - **Report by voice:** tap the limit sign and say "radar" (or "radar 60") to save a camera, "remove radar" for the next one, or "bump" to save a speed bump.
-- **No duplicate speed:** Google Maps already shows it, so ours appears only when over the limit (setting to always show). Long-press the sign to mute.
+- **Limit sign shows how you're doing:** white with a green ring, orange when over the limit, red when well over (20 km/h or 20 %). The GPS speed is gone from the overlay (Google Maps shows it). Long-press the sign to mute; 🔇 shows under it while muted.

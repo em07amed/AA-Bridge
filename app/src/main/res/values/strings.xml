@@ -119,8 +119,6 @@
     <string name="road_camera_alerts_summary">600 m before a camera. On the car screen, tap the limit sign and say \"radar\" (or \"radar 60\") to save one here; long-press the camera banner to remove a wrong one.</string>
     <string name="road_bump_alerts_title">Speed bump alerts</string>
     <string name="road_bump_alerts_summary">A few seconds before a speed bump from OpenStreetMap. Tap the limit sign and say \"bump\" to save one here.</string>
-    <string name="road_always_show_speed_title">Always show my speed</string>
-    <string name="road_always_show_speed_summary">Off: your speed shows only when you are over the limit, since Google Maps already shows it. Long-press the limit sign to mute.</string>
     <string name="road_bump_banner">⚠️ Bump %1$d m</string>
     <string name="road_say_bump">Speed bump in %1$d metres.</string>
     <string name="road_note_bump_added">Speed bump saved here</string>
