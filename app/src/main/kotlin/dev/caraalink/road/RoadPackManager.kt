@@ -105,7 +105,8 @@ object RoadPackManager {
             prefs.edit().putLong("checked", now).apply()
             val version = meta.getString("version")
             open(ctx)
-            if (info?.version == version && file(ctx).exists()) {
+            // Same date and size: nothing new (a pack rebuilt the same day differs in size).
+            if (info?.version == version && info?.bytes == meta.optLong("bytes", info?.bytes ?: 0) && file(ctx).exists()) {
                 lastError = null
                 return false
             }

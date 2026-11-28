@@ -18,9 +18,6 @@
 - لو عايزها تظهر على طول، شغّل "اعرض سرعتي على طول" من الإعدادات.
 - عشان تكتم الصوت، دوس مطوّل على علامة الحد.
 
-**🎯 علامة الحد والسرعة أصغر**
-- مربع السرعة بقى بنفس عرض علامة الحد، والاتنين بقوا أصغر من الأول بحوالي النص وعلى حافة الشاشة.
-
 ---
 
 ## What's new
@@ -28,4 +25,3 @@
 - **Speed bump alerts:** about 7 s before a bump ("Speed bump in 100 metres") with an orange banner, once per row of bumps. Bumps come from OpenStreetMap in the offline pack. Toggle in settings.
 - **Report by voice:** tap the limit sign and say "radar" (or "radar 60") to save a camera, "remove radar" for the next one, or "bump" to save a speed bump.
 - **No duplicate speed:** Google Maps already shows it, so ours appears only when over the limit (setting to always show). Long-press the sign to mute.
-- **Smaller limit sign and speed,** the same width, at the screen edge.
