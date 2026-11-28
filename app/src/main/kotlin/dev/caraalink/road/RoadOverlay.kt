@@ -104,22 +104,24 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
         (column.layoutParams as LayoutParams).setMargins(m, m, m, m)
         column.requestLayout()
 
-        val d = (u * 11f).toInt()
+        val d = (u * 9f).toInt()
         sign.layoutParams = LinearLayout.LayoutParams(d, d).apply { bottomMargin = gap }
-        sign.setTextSize(TypedValue.COMPLEX_UNIT_PX, u * 5f)
+        sign.setTextSize(TypedValue.COMPLEX_UNIT_PX, u * 4f)
 
-        speed.setTextSize(TypedValue.COMPLEX_UNIT_PX, u * 5.5f)
-        speed.minWidth = d
+        speed.setTextSize(TypedValue.COMPLEX_UNIT_PX, u * 4.2f)
+        // Exactly the sign's width; a default child of the column would stretch to the widest row (the place chip).
+        speed.layoutParams = LinearLayout.LayoutParams(d, LinearLayout.LayoutParams.WRAP_CONTENT)
         speed.minHeight = d
-        speed.setPadding(gap, gap / 2, gap, gap / 2)
+        speed.setPadding(0, gap / 2, 0, gap / 2)
+        row.layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
 
         radar.setTextSize(TypedValue.COMPLEX_UNIT_PX, u * 5.5f)
         radar.setPadding(gap * 2, gap, gap * 2, gap)
         radar.layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
             .apply { bottomMargin = gap }
 
-        place.setTextSize(TypedValue.COMPLEX_UNIT_PX, u * 4.5f)
-        place.setPadding(gap * 2, gap, gap * 2, gap)
+        place.setTextSize(TypedValue.COMPLEX_UNIT_PX, u * 3.5f)
+        place.setPadding(gap + gap / 2, gap / 2, gap + gap / 2, gap / 2)
         place.layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
             .apply { bottomMargin = gap }
         place.background = rounded(DARK)
@@ -154,7 +156,7 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
                 shape = GradientDrawable.OVAL
                 setColor(Color.WHITE)
                 setStroke(
-                    (u * 1.2f).toInt().coerceAtLeast(2),
+                    (u * 1f).toInt().coerceAtLeast(2),
                     when {
                         s.limitFromUser -> BLUE
                         s.limitFromRoad -> RED

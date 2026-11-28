@@ -1,19 +1,11 @@
 ## الجديد في النسخة دي
 
-**🎯 علامة الحد والسرعة أصغر**
-- علامة حد السرعة بقت فوق ومربع السرعة تحتها، وبقوا أصغر بحوالي الثلث، فمبقوش بيغطّوا الخريطة.
-- الحلقة حوالين الحد بقت أرفع، والألوان زي ما هي: أحمر للحد المكتوب على الطريق، برتقالي للحد المتوقع، وأزرق للحد اللي حددته بصوتك.
-
-**🧹 شيلنا صفحة الدعم**
-- مفيش رسالة دعم أو InstaPay تاني، لا في الأبلكيشن ولا على شاشة العربية.
-
-**🗺️ ملف الطرق**
-- تحديث ملف طرق مصر كل أسبوع بقى يحاول تاني لوحده لو سيرفر الخرايط مردّش.
+**🎯 علامة الحد والسرعة أصغر كمان**
+- مربع السرعة بقى بنفس عرض علامة الحد بالظبط، بعد ما كان بياخد عرض شريط المدينة كله.
+- العلامة والسرعة بقوا أصغر من الأول بحوالي النص، وشريط الحرارة والمدينة كمان صغر.
 
 ---
 
 ## What's new
 
-- **Smaller limit sign and speed box, stacked** (sign on top, speed under it; about a third smaller, thinner ring), so they cover less of the map.
-- **Support page removed:** no donation / InstaPay prompts in the app or on the car screen.
-- **Roads pack:** the weekly refresh retries when the map server doesn't answer.
+- **Even smaller overlay:** the speed box is now exactly the limit sign's width instead of stretching to the city chip; the sign, speed and temperature/city chip are smaller again.
