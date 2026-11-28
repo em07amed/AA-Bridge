@@ -128,7 +128,7 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
         bump.setPadding(gap * 2, gap, gap * 2, gap)
         bump.layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
             .apply { bottomMargin = gap }
-        bump.background = rounded(ORANGE)
+        bump.background = rounded(DARK)
 
         place.setTextSize(TypedValue.COMPLEX_UNIT_PX, u * 4.5f)
         place.setPadding(gap * 2, gap, gap * 2, gap)
