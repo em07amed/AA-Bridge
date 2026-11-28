@@ -11,6 +11,9 @@
 **📍 مكان الركنة**
 - مكان العربية بيتسجّل لوحده لما تركن. دوس على "مكان العربية" في الإشعار، أو "مكان الركنة" في الإعدادات، وهيفتحه على الخريطة.
 
+**📷 شريط الرادار**
+- شريط الرادار بقى بنفس شكل شريط الحرارة والمدينة: غامق وبنفس حجم الخط.
+
 **🌙 العلامات بالليل**
 - بالليل علامة الحد والشرايط بتبقى أغمق شوية عشان متبهرش عينك، مع الوضع الليلي اللي في Android Auto.
 
@@ -21,4 +24,5 @@
 - **Lower limit ahead:** "Limit drops to 60 in 300 metres" when the road ahead has a lower limit and you are faster than it, once per road.
 - **Trip summary:** after two minutes parked or when the car is switched off: distance, time, top speed and times over the limit, on the car screen and in a notification.
 - **Where I parked:** saved by itself; open it from the notification or from settings.
+- **Camera chip** now looks like the temperature/city chip.
 - **Night look:** the limit sign and chips are dimmer at night.

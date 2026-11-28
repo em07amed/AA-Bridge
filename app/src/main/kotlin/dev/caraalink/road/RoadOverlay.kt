@@ -118,7 +118,8 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
         speed.setPadding(0, gap / 2, 0, gap / 2)
         row.layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
 
-        radar.setTextSize(TypedValue.COMPLEX_UNIT_PX, u * 5.5f)
+        // Same chip as the temperature and city.
+        radar.setTextSize(TypedValue.COMPLEX_UNIT_PX, u * 4.5f)
         radar.setPadding(gap * 2, gap, gap * 2, gap)
         radar.layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
             .apply { bottomMargin = gap }
@@ -187,7 +188,7 @@ class RoadOverlay(context: Context) : FrameLayout(context) {
             val rounded10 = (cam + 5) / 10 * 10
             radar.text = context.getString(R.string.road_camera_banner, rounded10) +
                 (s.cameraLimit?.let { "  •  $it" } ?: "")
-            radar.background = rounded(RED)
+            radar.background = rounded(DARK)
         }
 
         val b = s.bumpM
