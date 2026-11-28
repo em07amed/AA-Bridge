@@ -530,10 +530,9 @@ class UsbLinkForegroundService : Service() {
         runCatching { getSystemService(NotificationManager::class.java).notify(OPEN_TO_RECONNECT_ID, n) }
     }
 
-    /** Reconnects pass fresh=false, so a drive that's already going never gets the page. */
-    private fun supportPageDue(fresh: Boolean): Boolean = fresh && dev.caraalink.aa.AaSessionProbe.active == null &&
-        dev.caraalink.support.SupportAsk.isDue(AppSettings.supportHelped(this), AppSettings.supported(this),
-            AppSettings.supportCarPageShownAt(this), System.currentTimeMillis(), dev.caraalink.support.SupportAsk.CAR_PAGE_INTERVAL_MS)
+    /** Drive Bridge never shows the support page on the car screen. */
+    @Suppress("UNUSED_PARAMETER")
+    private fun supportPageDue(fresh: Boolean): Boolean = false
 
     /** Transport-level read/write failure, as opposed to a clean close or a real unplug. */
     private fun isTransportIoFailure(reason: String): Boolean =

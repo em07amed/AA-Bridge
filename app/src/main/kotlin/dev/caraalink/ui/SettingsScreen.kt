@@ -73,7 +73,7 @@ fun SubScreen(title: String, onBack: () -> Unit, content: @Composable ColumnScop
 }
 
 @Composable
-fun SettingsScreen(onBack: () -> Unit, onHelp: () -> Unit, onAbout: () -> Unit, onSupport: () -> Unit) {
+fun SettingsScreen(onBack: () -> Unit, onHelp: () -> Unit, onAbout: () -> Unit) {
     val context = LocalContext.current
     SubScreen(stringResource(R.string.settings), onBack) {
         WirelessCarRow()
@@ -82,8 +82,6 @@ fun SettingsScreen(onBack: () -> Unit, onHelp: () -> Unit, onAbout: () -> Unit, 
                 UpdateChecker.checkNow(context, manual = true)
             }
             SettingsRow(painterResource(R.drawable.ic_help), stringResource(R.string.help), onClick = onHelp)
-            SettingsRow(painterResource(R.drawable.ic_coffee), stringResource(R.string.support_action),
-                supporting = stringResource(R.string.support_if_helped), onClick = onSupport)
             SettingsRow(rememberVectorPainter(Icons.Rounded.Info), stringResource(R.string.settings_about), onClick = onAbout)
             SettingsRow(painterResource(R.drawable.ic_tune), stringResource(R.string.settings_advanced)) {
                 context.startActivity(Intent(context, SettingsActivity::class.java))
